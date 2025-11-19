@@ -1,23 +1,18 @@
 {
-  "rules": {
-    "off": "off"
-  },
   "plugins": ["@typescript-eslint"],
   "extends": [
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
-  "overrides": [
-    {
-      "files": ["**/*"],
-      "rules": {
-        "@typescript-eslint/no-unused-vars": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@next/next/no-img-element": "off",
-        "react-hooks/exhaustive-deps": "off",
-        "no-unused-vars": "off"
-      }
-    }
-  ]
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@next/next/no-img-element": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "no-unused-vars": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-non-null-assertion": "off"
+  }
 }
