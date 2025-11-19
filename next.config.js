@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: 'build',
+  // Use default .next directory for Vercel compatibility
+  // distDir: 'build', // Commented out for Vercel deployment
   transpilePackages: ['@multiversx/sdk-dapp-ui'],
   eslint: {
     // Disable ESLint during builds
