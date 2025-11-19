@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add the group-hover plugin */
+@layer utilities {
+  .group:hover .group-hover\:block {
+    display: block;
+    text-decoration: underline;
+  }
+}
+
+.mx-transactions > td {
+  @apply p-2;
+}
+
+.mx-transactions td > span,
+.mx-transactions td > div {
+  @apply flex w-max;
+}
+
+.mx-transactions td > div > a {
+  @apply text-blue-600;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
