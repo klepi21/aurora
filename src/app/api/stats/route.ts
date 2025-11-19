@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/server';
  * GET /api/stats
  * Get statistics for the landing page
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get total number of users (players)
     const { count, error } = await supabaseAdmin

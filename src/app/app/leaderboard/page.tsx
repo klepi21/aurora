@@ -20,14 +20,12 @@ const getInitials = (teamName: string | null) => {
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const topThree = leaderboard.slice(0, 3);
   const rest = leaderboard.slice(3);
 
   // Load leaderboard from database
   useEffect(() => {
     const loadLeaderboard = async () => {
-      setLoading(true);
       try {
         const response = await fetch('/api/leaderboard?limit=100');
         const result = await response.json();
@@ -39,8 +37,6 @@ export default function LeaderboardPage() {
         }
       } catch (error) {
         console.error('Error loading leaderboard:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -157,7 +153,6 @@ export default function LeaderboardPage() {
       <div className='bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-6 shadow-2xl border border-gray-800/50'>
         <div className='flex flex-col gap-3'>
           {rest.map((entry) => {
-            const borderGradient = getRankGradientBorder(entry.rank);
             const borderColor = getRankBorderColor(entry.rank);
             
             return (

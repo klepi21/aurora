@@ -5,11 +5,7 @@ import { RouteNamesEnum } from '@/localConstants';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { useGetIsLoggedIn } from '@/lib';
-import { ConnectButton } from '@/components/Layout/Header/components';
-
 export default function Home() {
-  const isLoggedIn = useGetIsLoggedIn();
   const [totalPlayers, setTotalPlayers] = useState<number>(0);
   const [displayPlayers, setDisplayPlayers] = useState<number>(0);
   const [totalPrize] = useState<number>(500);

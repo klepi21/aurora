@@ -7,7 +7,7 @@ import { useGetIsLoggedIn } from '@/lib';
 import { RouteNamesEnum } from '@/localConstants';
 import mvxLogo from '../../../../public/assets/img/multiversx-logo.svg';
 import Image from 'next/image';
-import { ConnectButton, GitHubButton, NotificationsButton } from './components';
+import { GitHubButton, NotificationsButton } from './components';
 
 export const Header = () => {
   const isLoggedIn = useGetIsLoggedIn();

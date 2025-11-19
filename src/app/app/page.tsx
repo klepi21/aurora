@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import {
   useGetAccountInfo,
   useGetNetworkConfig,
-  MvxFormatAmount,
   FormatAmountController,
   DIGITS,
   DECIMALS,
@@ -163,9 +162,9 @@ export default function App() {
                   } else {
                     throw new Error(saveResult.error || 'Failed to save team name');
                   }
-                } catch (dbError: any) {
+                } catch (dbError: unknown) {
                   console.error('Error saving team name to database:', dbError);
-                  setTeamSubmitError('Transaction succeeded but failed to save team name. Please try again.');
+                  setTeamSubmitError((dbError as Error)?.message || 'Transaction succeeded but failed to save team name. Please try again.');
                   setIsSubmittingTeam(false);
                   setPendingTxHash('');
                 }
@@ -287,9 +286,9 @@ export default function App() {
       } else {
         throw new Error('Transaction failed to send');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting team name:', error);
-      setTeamSubmitError(error?.message || 'Failed to submit team name. Please try again.');
+      setTeamSubmitError((error as Error)?.message || 'Failed to submit team name. Please try again.');
       setIsSubmittingTeam(false);
     }
   };
@@ -315,7 +314,7 @@ export default function App() {
       })
     : '';
 
-  const { isValid, valueDecimal, valueInteger, label } =
+  const { valueDecimal, valueInteger } =
     FormatAmountController.getData({
       digits: DIGITS,
       decimals: DECIMALS,

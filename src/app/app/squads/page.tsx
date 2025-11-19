@@ -23,10 +23,6 @@ interface NFT {
   url: string;
 }
 
-interface SelectedPlayer {
-  position: string;
-  nft: NFT | null;
-}
 
 export default function SquadsPage() {
   const { address } = useGetAccountInfo();
@@ -199,14 +195,6 @@ export default function SquadsPage() {
     return BigInt(changedCount) * BigInt(TRANSFER_COST_PER_PLAYER);
   };
 
-  // Check if balance is sufficient for transfer
-  const hasSufficientBalanceForTransfer = () => {
-    if (!address) return false;
-    const transferCost = getTransferCost();
-    const gasCost = BigInt(70000) * BigInt(GAS_PRICE);
-    // We'll need account balance - let's check it in the handler
-    return true; // Will check in handler with actual balance
-  };
 
   const handleStartTransfer = () => {
     setIsTransferMode(true);
@@ -270,9 +258,9 @@ export default function SquadsPage() {
       } else {
         throw new Error(result.error || 'Failed to save team');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving team:', error);
-      setSaveError(error?.message || 'Failed to save team. Please try again.');
+      setSaveError((error as Error)?.message || 'Failed to save team. Please try again.');
       setIsSavingTeam(false);
       setPendingTransferTxHash('');
     }
@@ -344,10 +332,6 @@ export default function SquadsPage() {
 
     try {
       const transferCost = getTransferCost();
-      const gasCost = BigInt(70000) * BigInt(GAS_PRICE);
-      
-      // Check balance (we'll need account balance - for now assume it's checked)
-      // In a real scenario, you'd check account.balance here
 
       const transaction = new Transaction({
         value: transferCost,
@@ -387,9 +371,9 @@ export default function SquadsPage() {
       } else {
         throw new Error('Transaction failed to send');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error processing transfer:', error);
-      setSaveError(error?.message || 'Failed to process transfer. Please try again.');
+      setSaveError((error as Error)?.message || 'Failed to process transfer. Please try again.');
       setIsSavingTeam(false);
     }
   };
@@ -451,9 +435,9 @@ export default function SquadsPage() {
       } else {
         throw new Error(result.error || 'Failed to save team');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving team:', error);
-      setSaveError(error?.message || 'Failed to save team. Please try again.');
+      setSaveError((error as Error)?.message || 'Failed to save team. Please try again.');
     } finally {
       setIsSavingTeam(false);
     }
