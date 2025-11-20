@@ -11,6 +11,9 @@ const nextConfig = {
     // Also disable TypeScript errors during builds (optional)
     ignoreBuildErrors: false,
   },
+  images: {
+    unoptimized: true, // Disable image optimization for Vercel compatibility
+  },
   webpack: (config) => {
     config.resolve.fallback = { fs: false };
     config.externals.push('pino-pretty', 'lokijs', 'encoding', {
