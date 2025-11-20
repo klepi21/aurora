@@ -96,8 +96,8 @@ export default function LeaderboardPage() {
               <div
                 className={`relative w-24 h-24 rounded-full border-4 ${getRankBorderColor(2)} bg-gray-800 flex items-center justify-center overflow-hidden`}
               >
-                <div className='text-2xl font-bold text-white'>
-                  {getInitials(topThree[1]?.teamName || null)}
+                <div className='text-5xl'>
+                  🥈
                 </div>
               </div>
               <p className='text-base font-semibold text-white text-center'>
@@ -115,8 +115,8 @@ export default function LeaderboardPage() {
               <div
                 className={`relative w-32 h-32 rounded-full border-4 ${getRankBorderColor(1)} bg-gray-800 flex items-center justify-center overflow-hidden`}
               >
-                <div className='text-3xl font-bold text-white'>
-                  {getInitials(topThree[0]?.teamName || null)}
+                <div className='text-6xl'>
+                  🥇
                 </div>
               </div>
               <p className='text-lg font-bold text-white text-center'>
@@ -134,8 +134,8 @@ export default function LeaderboardPage() {
               <div
                 className={`relative w-24 h-24 rounded-full border-4 ${getRankBorderColor(3)} bg-gray-800 flex items-center justify-center overflow-hidden`}
               >
-                <div className='text-2xl font-bold text-white'>
-                  {getInitials(topThree[2]?.teamName || null)}
+                <div className='text-5xl'>
+                  🥉
                 </div>
               </div>
               <p className='text-base font-semibold text-white text-center'>
