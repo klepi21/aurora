@@ -266,12 +266,10 @@ export default function Home() {
               {/* Center Column - Image */}
               <div className='flex items-center justify-center'>
                 <div className='relative w-full aspect-square'>
-                  <Image
-                    src='/assets/img/Layer%202.png'
+                  <img
+                    src='/assets/img/Layer 2.png'
                     alt='Aurora Football'
-                    fill
-                    className='object-contain'
-                    unoptimized
+                    className='w-full h-full object-contain'
                   />
                 </div>
               </div>
@@ -404,12 +402,10 @@ export default function Home() {
               {/* Left Column - Image */}
               <div className='hidden md:flex items-center justify-center order-2 md:order-1'>
                 <div className='relative w-full aspect-square'>
-                  <Image
-                    src='/assets/img/Layer%203.png'
+                  <img
+                    src='/assets/img/Layer 3.png'
                     alt='Aurora Football'
-                    fill
-                    className='object-contain'
-                    unoptimized
+                    className='w-full h-full object-contain'
                   />
                 </div>
               </div>
@@ -453,12 +449,10 @@ export default function Home() {
               {/* Mobile Image - appears above steps */}
               <div className='md:hidden col-span-2 flex items-center justify-center py-6 order-1'>
                 <div className='relative w-full aspect-square max-w-[200px] mx-auto'>
-                  <Image
-                    src='/assets/img/Layer%203.png'
+                  <img
+                    src='/assets/img/Layer 3.png'
                     alt='Aurora Football'
-                    fill
-                    className='object-contain'
-                    unoptimized
+                    className='w-full h-full object-contain'
                   />
                 </div>
               </div>
