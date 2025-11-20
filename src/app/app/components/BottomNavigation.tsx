@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     )
   },
   {
-    label: 'my team',
+    label: 'team',
     path: `${RouteNamesEnum.app}/squads`,
     icon: (
       <Image
@@ -71,13 +71,13 @@ const navItems: NavItem[] = [
     )
   },
   {
-    label: 'Disconnect',
+    label: 'Exit',
     path: '#',
     isAction: true,
     icon: (
       <Image
         src={disconnectIcon}
-        alt='Disconnect'
+        alt='Exit'
         width={32}
         height={32}
         className='w-8 h-8'
