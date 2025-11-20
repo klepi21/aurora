@@ -42,7 +42,7 @@ export const Header = () => {
               className='flex items-center justify-center'
               to={isLoggedIn ? RouteNamesEnum.app : RouteNamesEnum.home}
             >
-              <Image src='/assets/img/logoafl.png' alt='Aurora Football League' className={`${isHomePage ? 'h-12 md:h-16' : 'h-8 md:h-10'} w-auto`} width={200} height={60} unoptimized />
+              <img src='/assets/img/logoafl.png' alt='Aurora Football League' className={`${isHomePage ? 'h-12 md:h-16' : 'h-8 md:h-10'} w-auto`} />
             </MxLink>
           </div>
 

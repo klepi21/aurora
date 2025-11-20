@@ -140,12 +140,10 @@ export default function Home() {
             {/* Right Column - Visual Element */}
             <div className='relative flex items-center justify-center py-8 md:py-12'>
               <div className='relative w-full max-w-md aspect-square'>
-                <Image
+                <img
                   src='/assets/img/Layer 1.png'
                   alt='Aurora Football League'
-                  fill
-                  className='object-contain scale-x-[-1]'
-                  unoptimized
+                  className='w-full h-full object-contain scale-x-[-1]'
                 />
               </div>
             </div>
@@ -157,12 +155,10 @@ export default function Home() {
         <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
           {/* Background Image */}
           <div className='absolute inset-0 z-0'>
-            <Image
+            <img
               src='/assets/img/bg2.png'
               alt='Background'
-              fill
-              className='object-cover opacity-20'
-              unoptimized
+              className='w-full h-full object-cover opacity-20'
             />
           </div>
           
@@ -181,12 +177,10 @@ export default function Home() {
               {/* Mobile Image - appears at top */}
               <div className='flex items-center justify-center py-4'>
                 <div className='relative w-full aspect-square max-w-[250px] mx-auto'>
-                  <Image
-                    src='/assets/img/Layer%202.png'
+                  <img
+                    src='/assets/img/Layer 2.png'
                     alt='Aurora Football'
-                    fill
-                    className='object-contain'
-                    unoptimized
+                    className='w-full h-full object-contain'
                   />
                 </div>
               </div>
@@ -317,12 +311,10 @@ export default function Home() {
         <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
           {/* Background Image */}
           <div className='absolute inset-0 z-0'>
-            <Image
+            <img
               src='/assets/img/bg3.png'
               alt='Background'
-              fill
-              className='object-cover opacity-20'
-              unoptimized
+              className='w-full h-full object-cover opacity-20'
             />
           </div>
           
@@ -389,12 +381,10 @@ export default function Home() {
         <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
           {/* Background Image */}
           <div className='absolute inset-0 z-0'>
-            <Image
+            <img
               src='/assets/img/bg4.png'
               alt='Background'
-              fill
-              className='object-cover opacity-20'
-              unoptimized
+              className='w-full h-full object-cover opacity-20'
             />
           </div>
           
