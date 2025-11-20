@@ -6,7 +6,6 @@ import { environment } from '@/config';
 import { useGetIsLoggedIn } from '@/lib';
 import { RouteNamesEnum } from '@/localConstants';
 import mvxLogo from '../../../../public/assets/img/multiversx-logo.svg';
-import logoAFL from '../../../../public/assets/img/logoafl.png';
 import Image from 'next/image';
 import { GitHubButton, NotificationsButton } from './components';
 
@@ -43,7 +42,7 @@ export const Header = () => {
               className='flex items-center justify-center'
               to={isLoggedIn ? RouteNamesEnum.app : RouteNamesEnum.home}
             >
-              <Image src={logoAFL} alt='Aurora Football League' className={`${isHomePage ? 'h-12 md:h-16' : 'h-8 md:h-10'} w-auto`} unoptimized />
+              <Image src='/assets/img/logoafl.png' alt='Aurora Football League' className={`${isHomePage ? 'h-12 md:h-16' : 'h-8 md:h-10'} w-auto`} width={200} height={60} unoptimized />
             </MxLink>
           </div>
 
