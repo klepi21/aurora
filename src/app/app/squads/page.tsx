@@ -566,7 +566,7 @@ export default function SquadsPage() {
       )}
 
       {/* Save Team Button */}
-      {isAllPositionsFilled() && !teamSaved && (
+      {isAllPositionsFilled() && !teamSaved && teamName && (
         <button
           onClick={handleSaveTeam}
           disabled={isSavingTeam}
@@ -574,6 +574,13 @@ export default function SquadsPage() {
         >
           {isSavingTeam ? 'Saving Team...' : 'Save Team'}
         </button>
+      )}
+
+      {/* Message if team name is missing */}
+      {isAllPositionsFilled() && !teamSaved && !teamName && (
+        <div className='w-full bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 font-semibold py-4 px-6 rounded-2xl text-center'>
+          Please set your team name first before saving your team
+        </div>
       )}
 
       {/* Transfer Mode Controls */}
