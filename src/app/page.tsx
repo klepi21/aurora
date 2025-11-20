@@ -109,8 +109,20 @@ export default function Home() {
         {/* Content wrapper with relative positioning */}
         <div className='relative z-10'>
         {/* Hero Section */}
-        <div className='w-full px-6 md:px-12 py-12 md:py-20'>
-          <div className='max-w-7xl mx-auto grid md:grid-cols-2 gap-2 md:gap-4 items-center'>
+        <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
+          {/* Video Background */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className='absolute inset-0 w-full h-full object-cover opacity-100 z-0'
+          >
+            <source src='/assets/img/bgvid.mp4' type='video/mp4' />
+          </video>
+          
+          {/* Content Overlay */}
+          <div className='relative z-10 max-w-7xl mx-auto grid md:grid-cols-2 gap-2 md:gap-4 items-center'>
             {/* Left Column - Main Content */}
             <div className='flex flex-col gap-8 items-center text-center'>
               <div>
@@ -139,32 +151,21 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Football Divider */}
-        <div className='relative my-8 md:my-12'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-white/10'></div>
-          </div>
-          <div className='relative flex justify-center'>
-            <div className='px-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-[#3EB489] to-[#8ED6C1] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='white'
-                  viewBox='0 0 24 24'
-                  className='w-6 h-6'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1c4.97 0 9 4.03 9 9s-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3zm0 1.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5S16.14 4.5 12 4.5z' />
-                  <path d='M12 6l-2 2-2-2M12 18l2-2 2 2M6 12l2-2-2-2M18 12l-2-2 2-2' stroke='white' strokeWidth='1.5' fill='none' />
-                  <circle cx='12' cy='12' r='1.5' fill='white' />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Features Section */}
-        <div className='w-full px-6 md:px-12 py-12 md:py-20'>
-          <div className='max-w-7xl mx-auto'>
+        <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
+          {/* Background Image */}
+          <div className='absolute inset-0 z-0'>
+            <Image
+              src='/assets/img/bg2.png'
+              alt='Background'
+              fill
+              className='object-cover opacity-20'
+            />
+          </div>
+          
+          {/* Content Overlay */}
+          <div className='relative z-10 max-w-7xl mx-auto'>
             <div className='mb-12'>
               <h2 className='text-4xl md:text-5xl font-bold text-white mb-4'>
                 Why Choose
@@ -257,32 +258,21 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Football Divider */}
-        <div className='relative my-8 md:my-12'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-white/10'></div>
-          </div>
-          <div className='relative flex justify-center'>
-            <div className='px-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-[#3EB489] to-[#8ED6C1] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='white'
-                  viewBox='0 0 24 24'
-                  className='w-6 h-6'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1c4.97 0 9 4.03 9 9s-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3zm0 1.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5S16.14 4.5 12 4.5z' />
-                  <path d='M12 6l-2 2-2-2M12 18l2-2 2 2M6 12l2-2-2-2M18 12l-2-2 2-2' stroke='white' strokeWidth='1.5' fill='none' />
-                  <circle cx='12' cy='12' r='1.5' fill='white' />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Stats Section */}
-        <div className='w-full px-6 md:px-12 py-12 md:py-20'>
-          <div className='max-w-7xl mx-auto'>
+        <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
+          {/* Background Image */}
+          <div className='absolute inset-0 z-0'>
+            <Image
+              src='/assets/img/bg3.png'
+              alt='Background'
+              fill
+              className='object-cover opacity-20'
+            />
+          </div>
+          
+          {/* Content Overlay */}
+          <div className='relative z-10 max-w-7xl mx-auto'>
             <div className='grid md:grid-cols-2 gap-8'>
               {/* Total Players */}
               <div className='bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 md:p-12 shadow-2xl border border-gray-800/50 text-center'>
@@ -341,17 +331,29 @@ export default function Home() {
         </div>
 
         {/* How It Works Section */}
-        <div className='w-full px-6 md:px-12 py-12 md:py-20'>
-          <div className='text-center mb-12'>
-            <h2 className='text-4xl md:text-5xl font-bold text-white mb-4'>
-              How It <span className='text-[#3EB489]'>Works</span>
-            </h2>
-            <p className='text-white/70 text-lg max-w-2xl mx-auto'>
-              Simple steps to start your fantasy football journey
-            </p>
+        <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
+          {/* Background Image */}
+          <div className='absolute inset-0 z-0'>
+            <Image
+              src='/assets/img/bg4.png'
+              alt='Background'
+              fill
+              className='object-cover opacity-20'
+            />
           </div>
+          
+          {/* Content Overlay */}
+          <div className='relative z-10'>
+            <div className='text-center mb-12'>
+              <h2 className='text-4xl md:text-5xl font-bold text-white mb-4'>
+                How It <span className='text-[#3EB489]'>Works</span>
+              </h2>
+              <p className='text-white/70 text-lg max-w-2xl mx-auto'>
+                Simple steps to start your fantasy football journey
+              </p>
+            </div>
 
-          <div className='max-w-7xl mx-auto'>
+            <div className='max-w-7xl mx-auto'>
             <div className='grid md:grid-cols-2 gap-8 md:gap-12 items-center'>
               {/* Left Column - Image */}
               <div className='hidden md:flex items-center justify-center order-2 md:order-1'>
@@ -415,31 +417,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Football Divider */}
-        <div className='relative my-8 md:my-12'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-white/10'></div>
-          </div>
-          <div className='relative flex justify-center'>
-            <div className='px-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-[#3EB489] to-[#8ED6C1] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='white'
-                  viewBox='0 0 24 24'
-                  className='w-6 h-6'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1c4.97 0 9 4.03 9 9s-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3zm0 1.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5S16.14 4.5 12 4.5z' />
-                  <path d='M12 6l-2 2-2-2M12 18l2-2 2 2M6 12l2-2-2-2M18 12l-2-2 2-2' stroke='white' strokeWidth='1.5' fill='none' />
-                  <circle cx='12' cy='12' r='1.5' fill='white' />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
+
 
         {/* Scoring System */}
         <div className='w-full px-6 md:px-12 py-12 md:py-20'>
@@ -570,28 +551,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Football Divider */}
-        <div className='relative my-8 md:my-12'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-white/10'></div>
-          </div>
-          <div className='relative flex justify-center'>
-            <div className='px-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-[#3EB489] to-[#8ED6C1] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='white'
-                  viewBox='0 0 24 24'
-                  className='w-6 h-6'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1c4.97 0 9 4.03 9 9s-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3zm0 1.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5S16.14 4.5 12 4.5z' />
-                  <path d='M12 6l-2 2-2-2M12 18l2-2 2 2M6 12l2-2-2-2M18 12l-2-2 2-2' stroke='white' strokeWidth='1.5' fill='none' />
-                  <circle cx='12' cy='12' r='1.5' fill='white' />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* CTA Section */}
         <div className='w-full px-6 md:px-12 py-20'>
@@ -612,28 +571,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Football Divider */}
-        <div className='relative my-8 md:my-12'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-white/10'></div>
-          </div>
-          <div className='relative flex justify-center'>
-            <div className='px-4'>
-              <div className='w-12 h-12 bg-gradient-to-br from-[#3EB489] to-[#8ED6C1] rounded-full flex items-center justify-center shadow-lg border-2 border-white/20'>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='white'
-                  viewBox='0 0 24 24'
-                  className='w-6 h-6'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 1c4.97 0 9 4.03 9 9s-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3zm0 1.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5S16.14 4.5 12 4.5z' />
-                  <path d='M12 6l-2 2-2-2M12 18l2-2 2 2M6 12l2-2-2-2M18 12l-2-2 2-2' stroke='white' strokeWidth='1.5' fill='none' />
-                  <circle cx='12' cy='12' r='1.5' fill='white' />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Footer */}
         <footer className='w-full border-t border-gray-800/50 py-8'>
