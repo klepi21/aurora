@@ -228,7 +228,11 @@ export default function ShopPage() {
         );
         
         console.log('Final parsed offers with availability:', offersWithAvailability);
-        setOffers(offersWithAvailability);
+        // Filter out offers 1, 2, 3, and 4
+        const filteredOffers = offersWithAvailability.filter(
+          (offer) => !['1', '2', '3', '4'].includes(offer.id)
+        );
+        setOffers(filteredOffers);
       } catch (error) {
         console.error('Error fetching offers:', error);
       } finally {
@@ -322,8 +326,8 @@ export default function ShopPage() {
         </div>
       ) : offers.length === 0 ? (
         <div className='flex flex-col items-center justify-center py-12 gap-4'>
-          <p className='text-white/70 text-lg'>No offers available at the moment</p>
-          <p className='text-white/50 text-sm'>Check back later for new NFT listings</p>
+          <p className='text-white/70 text-lg'>Players will be here</p>
+          <p className='text-white/50 text-sm'>Check back later for new player listings</p>
         </div>
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
