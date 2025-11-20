@@ -174,7 +174,72 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className='grid md:grid-cols-3 gap-8 md:gap-12 items-center'>
+            {/* Mobile Layout */}
+            <div className='md:hidden space-y-6'>
+              {/* Mobile Image - appears at top */}
+              <div className='flex items-center justify-center py-4'>
+                <div className='relative w-full aspect-square max-w-[250px] mx-auto'>
+                  <Image
+                    src='/assets/img/Layer%202.png'
+                    alt='Aurora Football'
+                    fill
+                    className='object-contain'
+                    unoptimized
+                  />
+                </div>
+              </div>
+
+              {/* Feature 01 */}
+              <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                <div className='absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                <div className='relative z-10'>
+                  <div className='text-5xl font-bold text-[#3EB489] mb-3'>01</div>
+                  <h3 className='text-lg font-bold text-white mb-2'>True Ownership</h3>
+                  <p className='text-white/70 text-sm leading-relaxed'>
+                    Full control of your team through NFT ownership. Your players, your assets.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 02 */}
+              <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                <div className='absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                <div className='relative z-10'>
+                  <div className='text-5xl font-bold text-[#3EB489] mb-3'>02</div>
+                  <h3 className='text-lg font-bold text-white mb-2'>Competitive Seasons</h3>
+                  <p className='text-white/70 text-sm leading-relaxed'>
+                    Compete in 2-month seasons. Earn points, climb leaderboards, win rewards.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 03 */}
+              <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                <div className='absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                <div className='relative z-10'>
+                  <div className='text-5xl font-bold text-[#3EB489] mb-3'>03</div>
+                  <h3 className='text-lg font-bold text-white mb-2'>Strategic Gameplay</h3>
+                  <p className='text-white/70 text-sm leading-relaxed'>
+                    Build your 5-player team: 1 GK, 2 DEF, 2 ATT. Strategy matters.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature 04 */}
+              <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                <div className='absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                <div className='relative z-10'>
+                  <div className='text-5xl font-bold text-[#3EB489] mb-3'>04</div>
+                  <h3 className='text-lg font-bold text-white mb-2'>Earn Rewards</h3>
+                  <p className='text-white/70 text-sm leading-relaxed'>
+                    Win USDC prizes, rare NFTs, and exclusive rewards based on performance.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className='hidden md:grid md:grid-cols-3 gap-8 md:gap-12 items-center'>
               {/* Left Column */}
               <div className='space-y-6'>
                 {/* Feature 01 */}
@@ -203,7 +268,7 @@ export default function Home() {
               </div>
 
               {/* Center Column - Image */}
-              <div className='hidden md:flex items-center justify-center'>
+              <div className='flex items-center justify-center'>
                 <div className='relative w-full aspect-square'>
                   <Image
                     src='/assets/img/Layer%202.png'
@@ -239,19 +304,6 @@ export default function Home() {
                       Win USDC prizes, rare NFTs, and exclusive rewards based on performance.
                     </p>
                   </div>
-                </div>
-              </div>
-
-              {/* Mobile Image - appears between rows */}
-              <div className='md:hidden col-span-3 flex items-center justify-center py-6'>
-                <div className='relative w-full aspect-square max-w-[200px] mx-auto'>
-                  <Image
-                    src='/assets/img/Layer%202.png'
-                    alt='Aurora Football'
-                    fill
-                    className='object-contain'
-                    unoptimized
-                  />
                 </div>
               </div>
             </div>
