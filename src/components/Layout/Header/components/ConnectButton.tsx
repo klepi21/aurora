@@ -33,5 +33,12 @@ export const ConnectButton = () => {
     unlockPanelManager.openUnlockPanel();
   }, [isLoggedIn, unlockPanelManager]);
 
-  return <Button onClick={handleClick}>Connect</Button>;
+  return (
+    <Button 
+      onClick={handleClick}
+      className='px-8 py-3 text-base font-semibold bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-xl shadow-lg hover:shadow-[#3EB489]/50 transition-all duration-300 transform hover:scale-105'
+    >
+      Connect Wallet
+    </Button>
+  );
 };

@@ -13,11 +13,34 @@ export default function AppLayout({ children }: PropsWithChildren) {
         <AppTopNavbar />
         <main className='flex-1 pb-20 pt-4 px-4 overflow-y-auto bg-gradient-to-b from-[#0A3124]/95 to-black'>
           {!isLoggedIn ? (
-            <div className='flex flex-col items-center justify-center h-full min-h-[400px] gap-4'>
-              <p className='text-white text-center mb-4'>
-                Please connect your wallet to continue
-              </p>
-              <ConnectButton />
+            <div className='flex flex-col items-center justify-center h-full min-h-[400px] gap-6 px-4'>
+              {/* Image */}
+              <div className='relative w-full max-w-[200px] aspect-square mb-4'>
+                <img
+                  src='/assets/img/Layer 3.png'
+                  alt='Aurora Football'
+                  className='w-full h-full object-contain'
+                  loading='lazy'
+                />
+              </div>
+              
+              {/* Message */}
+              <div className='text-center space-y-3'>
+                <h2 className='text-2xl md:text-3xl font-bold text-white'>
+                  ⚽ You're Not on the Pitch Yet!
+                </h2>
+                <p className='text-white/80 text-base md:text-lg max-w-md mx-auto leading-relaxed'>
+                  Connect your wallet to join Aurora Football League and start building your fantasy team. The match is waiting for you!
+                </p>
+                <p className='text-[#3EB489] text-sm font-medium mt-2'>
+                  🏆 Time to show what you're made of!
+                </p>
+              </div>
+              
+              {/* Connect Button */}
+              <div className='mt-4'>
+                <ConnectButton />
+              </div>
             </div>
           ) : (
             children
