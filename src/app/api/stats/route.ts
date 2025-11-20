@@ -8,9 +8,9 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 export async function GET() {
   try {
     // Get total number of registered teams (users who have set a team name)
-    const { count, error } = await supabaseAdmin
+    const { count, error, data } = await supabaseAdmin
       .from('users')
-      .select('*', { count: 'exact', head: true })
+      .select('wallet_address, team_name', { count: 'exact', head: false })
       .not('team_name', 'is', null);
 
     if (error) {
@@ -19,6 +19,12 @@ export async function GET() {
         { error: 'Failed to fetch stats' },
         { status: 500 }
       );
+    }
+
+    // Debug logging
+    console.log('Total registered teams:', count);
+    if (data) {
+      console.log('Teams found:', data.map(u => ({ wallet: u.wallet_address, team: u.team_name })));
     }
 
     return NextResponse.json({
