@@ -23,7 +23,16 @@ interface Offer {
   collection: string;
   token: string;
   price: string;
+  availableCount: number;
 }
+
+// Offer metadata mapping
+const OFFER_METADATA: Record<string, { name: string; image: string }> = {
+  '1': { name: 'SALAH', image: 'https://ipfs.io/ipfs/bafybeibhhya4s6w6fxotuqcqpym2qqmzqcpceu5sanuztyyvc2ir6x4fga' },
+  '2': { name: 'JULIAN', image: 'https://ipfs.io/ipfs/bafybeidqq6c6wqc5dvpsxehf6keumvrwug7wqqdyj6wb3w56ajqdyu3q4q' },
+  '3': { name: 'DONA', image: 'https://ipfs.io/ipfs/bafybeidkvuxvnwmilzpbuwt5aqet4nnehog5sixka7zs5txlogntx64xry' },
+  '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum' }
+};
 
 export default function ShopPage() {
   const { address } = useGetAccountInfo();
@@ -147,7 +156,8 @@ export default function ShopPage() {
                   creator,
                   collection,
                   token,
-                  price
+                  price,
+                  availableCount: 0 // Will be updated below
                 });
               }
             } catch (error) {
@@ -156,8 +166,69 @@ export default function ShopPage() {
           }
         }
         
-        console.log('Final parsed offers:', parsedOffers);
-        setOffers(parsedOffers);
+        // Fetch available NFTs count for each offer
+        const offersWithAvailability = await Promise.all(
+          parsedOffers.map(async (offer) => {
+            try {
+              const availableNftsResult = await scController.query({
+                contract: contractAddress,
+                function: 'availableNfts',
+                arguments: [new BigUIntValue(BigInt(offer.id))]
+              });
+              
+              let availableCount = 0;
+              if (availableNftsResult) {
+                const nftsValue = availableNftsResult.valueOf ? availableNftsResult.valueOf() : availableNftsResult;
+                console.log(`Available NFTs result for offer ${offer.id}:`, nftsValue);
+                console.log(`Type:`, typeof nftsValue, 'Is Array:', Array.isArray(nftsValue));
+                
+                if (Array.isArray(nftsValue)) {
+                  // Direct array of nonces
+                  availableCount = nftsValue.length;
+                } else if (typeof nftsValue === 'object' && nftsValue !== null) {
+                  // For variadic<u64> with multi_result: true, it returns an object with numeric keys
+                  // Each key represents one u64 value (nonce)
+                  // Count all numeric keys
+                  const keys = Object.keys(nftsValue);
+                  console.log(`Object keys:`, keys);
+                  
+                  // Filter to only numeric keys and count them
+                  const numericKeys = keys.filter(key => !isNaN(Number(key)));
+                  availableCount = numericKeys.length;
+                  
+                  // Also check if values are arrays (nested structure)
+                  if (availableCount === 0 && keys.length > 0) {
+                    const firstValue = (nftsValue as any)[keys[0]];
+                    if (Array.isArray(firstValue)) {
+                      availableCount = firstValue.length;
+                    } else if (keys.length === 1 && Array.isArray(Object.values(nftsValue)[0])) {
+                      // Single key containing an array
+                      availableCount = (Object.values(nftsValue)[0] as any[]).length;
+                    }
+                  }
+                  
+                  console.log(`Numeric keys count:`, numericKeys.length, 'All keys:', keys.length);
+                }
+                
+                console.log(`Final availableCount for offer ${offer.id}:`, availableCount);
+              }
+              
+              return {
+                ...offer,
+                availableCount
+              };
+            } catch (error) {
+              console.error(`Error fetching available NFTs for offer ${offer.id}:`, error);
+              return {
+                ...offer,
+                availableCount: 0
+              };
+            }
+          })
+        );
+        
+        console.log('Final parsed offers with availability:', offersWithAvailability);
+        setOffers(offersWithAvailability);
       } catch (error) {
         console.error('Error fetching offers:', error);
       } finally {
@@ -233,7 +304,7 @@ export default function ShopPage() {
     if (token === 'EGLD' || !token) {
       const fractionalStr = fractionalPart.toString().padStart(18, '0');
       const decimalPart = fractionalStr.slice(0, 4).replace(/0+$/, '') || '0';
-      return `${wholePart.toString()}.${decimalPart} EGLD`;
+      return `${wholePart.toString()}.${decimalPart}`;
     }
     
     return `${priceNum.toString()} ${token}`;
@@ -262,27 +333,57 @@ export default function ShopPage() {
               className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden hover:border-[#3EB489]/50 transition-all'
             >
               <div className='flex flex-col gap-4'>
-                {/* Image Placeholder */}
-                <div className='w-full aspect-square bg-gray-800/50 rounded-xl flex items-center justify-center border border-gray-700/50'>
-                  <div className='text-white/30 text-4xl'>🖼️</div>
+                {/* NFT Image */}
+                <div className='w-full aspect-square bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50'>
+                  {OFFER_METADATA[offer.id]?.image ? (
+                    <img
+                      src={OFFER_METADATA[offer.id].image}
+                      alt={OFFER_METADATA[offer.id]?.name || `Offer ${offer.id}`}
+                      className='w-full h-full object-cover'
+                      onError={(e) => {
+                        // Fallback to placeholder if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="text-white/30 text-4xl flex items-center justify-center w-full h-full">🖼️</div>';
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className='w-full h-full flex items-center justify-center'>
+                      <div className='text-white/30 text-4xl'>🖼️</div>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
                   <h3 className='text-xl font-bold text-white mb-3'>
-                    Offer #{offer.id}
+                    {OFFER_METADATA[offer.id]?.name || `Offer #${offer.id}`}
                   </h3>
-                  <div className='mb-4'>
+                  <div className='mb-4 flex items-center gap-2'>
                     <p className='text-white font-semibold text-lg'>
                       {formatPrice(offer.price, offer.token)}
                     </p>
+                    {(offer.token === 'EGLD' || !offer.token) && (
+                      <img
+                        src='https://s2.coinmarketcap.com/static/img/coins/200x200/6892.png'
+                        alt='EGLD'
+                        className='w-6 h-6'
+                      />
+                    )}
                   </div>
                 </div>
                 <Button
                   onClick={() => handleBuyNft(offer.id)}
-                  disabled={buyingOfferId === offer.id}
+                  disabled={buyingOfferId === offer.id || offer.availableCount === 0}
                   className='w-full px-6 py-3 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                  {buyingOfferId === offer.id ? 'Processing...' : 'Buy NFT'}
+                  {buyingOfferId === offer.id 
+                    ? 'Processing...' 
+                    : offer.availableCount === 0 
+                    ? 'Sold Out' 
+                    : 'Buy NFT'}
                 </Button>
               </div>
             </div>
