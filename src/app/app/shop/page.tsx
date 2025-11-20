@@ -377,13 +377,13 @@ export default function ShopPage() {
                 <Button
                   onClick={() => handleBuyNft(offer.id)}
                   disabled={buyingOfferId === offer.id || offer.availableCount === 0}
-                  className='w-full px-6 py-3 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='w-full px-6 py-3 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-gray-900 font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   {buyingOfferId === offer.id 
                     ? 'Processing...' 
                     : offer.availableCount === 0 
                     ? 'Sold Out' 
-                    : 'Buy NFT'}
+                    : 'BUY PLAYER'}
                 </Button>
               </div>
             </div>
