@@ -7,24 +7,31 @@ import { supabaseAdmin } from '@/lib/supabase/server';
  */
 export async function GET() {
   try {
-    // Get total number of registered teams (users who have set a team name)
-    const { count, error, data } = await supabaseAdmin
+    // First get count of users with team names
+    const { count, error: countError } = await supabaseAdmin
       .from('users')
-      .select('wallet_address, team_name', { count: 'exact', head: false })
+      .select('*', { count: 'exact', head: true })
       .not('team_name', 'is', null);
 
-    if (error) {
-      console.error('Error fetching stats:', error);
+    if (countError) {
+      console.error('Error fetching stats count:', countError);
       return NextResponse.json(
         { error: 'Failed to fetch stats' },
         { status: 500 }
       );
     }
 
-    // Debug logging
-    console.log('Total registered teams:', count);
-    if (data) {
-      console.log('Teams found:', data.map(u => ({ wallet: u.wallet_address, team: u.team_name })));
+    // Also fetch actual data for debugging
+    const { data, error: dataError } = await supabaseAdmin
+      .from('users')
+      .select('wallet_address, team_name')
+      .not('team_name', 'is', null);
+
+    if (dataError) {
+      console.error('Error fetching stats data:', dataError);
+    } else {
+      console.log('Total registered teams:', count);
+      console.log('Teams found:', data?.map(u => ({ wallet: u.wallet_address?.substring(0, 8), team: u.team_name })));
     }
 
     return NextResponse.json({
