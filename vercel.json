@@ -1,7 +1,6 @@
 {
   "buildCommand": "yarn build:devnet",
   "outputDirectory": ".next",
-  "framework": "nextjs",
-  "public": true
+  "framework": "nextjs"
 }
 
