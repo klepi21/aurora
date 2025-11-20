@@ -20,7 +20,7 @@ export const Header = () => {
   };
 
   return (
-    <header className={`relative w-full ${isHomePage ? 'bg-transparent' : 'bg-white'} py-4 md:py-6 ${isHomePage ? 'shadow-lg shadow-black/20' : 'shadow-md'}`}>
+    <header className={`${isHomePage ? 'fixed top-0 left-0 right-0 z-50' : 'relative'} w-full ${isHomePage ? 'bg-white/10 backdrop-blur-md border-b border-white/20' : 'bg-white'} py-4 md:py-6 ${isHomePage ? 'shadow-lg shadow-black/20' : 'shadow-md'}`}>
       <div className='max-w-7xl mx-auto px-6 md:px-12'>
         <div className='flex items-center justify-between'>
           {/* Left Navigation */}

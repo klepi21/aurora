@@ -109,7 +109,7 @@ export default function Home() {
         {/* Content wrapper with relative positioning */}
         <div className='relative z-10'>
         {/* Hero Section */}
-        <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
+        <div className='w-full px-6 md:px-12 pt-24 md:pt-32 pb-12 md:py-20 relative overflow-hidden'>
           {/* Video Background */}
           <video
             autoPlay
