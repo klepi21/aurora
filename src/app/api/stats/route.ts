@@ -7,10 +7,11 @@ import { supabaseAdmin } from '@/lib/supabase/server';
  */
 export async function GET() {
   try {
-    // Get total number of users (players)
+    // Get total number of registered teams (users who have set a team name)
     const { count, error } = await supabaseAdmin
       .from('users')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .not('team_name', 'is', null);
 
     if (error) {
       console.error('Error fetching stats:', error);
