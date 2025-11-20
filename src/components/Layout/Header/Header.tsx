@@ -6,6 +6,7 @@ import { environment } from '@/config';
 import { useGetIsLoggedIn } from '@/lib';
 import { RouteNamesEnum } from '@/localConstants';
 import mvxLogo from '../../../../public/assets/img/multiversx-logo.svg';
+import logoAFL from '../../../../public/assets/img/logoafl.png';
 import Image from 'next/image';
 import { GitHubButton, NotificationsButton } from './components';
 
@@ -20,7 +21,7 @@ export const Header = () => {
   };
 
   return (
-    <header className={`${isHomePage ? 'fixed top-0 left-0 right-0 z-50' : 'relative'} w-full ${isHomePage ? 'bg-white/10 backdrop-blur-md border-b border-white/20' : 'bg-white'} py-4 md:py-6 ${isHomePage ? 'shadow-lg shadow-black/20' : 'shadow-md'}`}>
+    <header className={`${isHomePage ? 'fixed top-0 left-0 right-0 z-50' : 'relative'} w-full ${isHomePage ? 'bg-white/10 backdrop-blur-md border-b border-white/20 rounded-b-2xl' : 'bg-white'} py-2 md:py-6 ${isHomePage ? 'shadow-lg shadow-black/20' : 'shadow-md'}`}>
       <div className='max-w-7xl mx-auto px-6 md:px-12'>
         <div className='flex items-center justify-between'>
           {/* Left Navigation */}
@@ -42,14 +43,7 @@ export const Header = () => {
               className='flex items-center justify-center'
               to={isLoggedIn ? RouteNamesEnum.app : RouteNamesEnum.home}
             >
-              {isHomePage ? (
-                <div className='text-2xl md:text-3xl font-bold'>
-                  <span className='text-white'>Aurora</span>
-                  <span className='text-[#3EB489]'> Football</span>
-                </div>
-              ) : (
-                <Image src={mvxLogo} alt='logo' className='h-6' />
-              )}
+              <Image src={logoAFL} alt='Aurora Football League' className={`${isHomePage ? 'h-12 md:h-16' : 'h-8 md:h-10'} w-auto`} unoptimized />
             </MxLink>
           </div>
 
@@ -69,7 +63,7 @@ export const Header = () => {
 
             {isHomePage && (
               <Link href={RouteNamesEnum.app}>
-                <Button className='px-6 py-3 text-sm font-semibold bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-xl shadow-lg'>
+                <Button className='px-3 py-1.5 md:px-6 md:py-3 text-xs md:text-sm font-semibold bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-gray-900 rounded-xl shadow-lg'>
                   Launch App
                 </Button>
               </Link>

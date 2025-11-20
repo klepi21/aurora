@@ -145,6 +145,7 @@ export default function Home() {
                   alt='Aurora Football League'
                   fill
                   className='object-contain scale-x-[-1]'
+                  unoptimized
                 />
               </div>
             </div>
@@ -161,6 +162,7 @@ export default function Home() {
               alt='Background'
               fill
               className='object-cover opacity-20'
+              unoptimized
             />
           </div>
           
@@ -320,6 +322,7 @@ export default function Home() {
               alt='Background'
               fill
               className='object-cover opacity-20'
+              unoptimized
             />
           </div>
           
@@ -391,6 +394,7 @@ export default function Home() {
               alt='Background'
               fill
               className='object-cover opacity-20'
+              unoptimized
             />
           </div>
           
