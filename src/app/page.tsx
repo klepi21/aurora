@@ -159,6 +159,11 @@ export default function Home() {
               src='/assets/img/bg2.png'
               alt='Background'
               className='w-full h-full object-cover opacity-20'
+              loading='lazy'
+              onError={(e) => {
+                console.error('Failed to load bg2.png');
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
           
@@ -173,7 +178,7 @@ export default function Home() {
             </div>
 
             {/* Mobile Layout */}
-            <div className='md:hidden space-y-6'>
+            <div className='block md:hidden space-y-6'>
               {/* Mobile Image - appears at top */}
               <div className='flex items-center justify-center py-4'>
                 <div className='relative w-full aspect-square max-w-[250px] mx-auto'>
@@ -181,6 +186,11 @@ export default function Home() {
                     src='/assets/img/Layer 2.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
+                    loading='lazy'
+                    onError={(e) => {
+                      console.error('Failed to load Layer 2.png (mobile)');
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               </div>
@@ -235,7 +245,8 @@ export default function Home() {
             </div>
 
             {/* Desktop Layout */}
-            <div className='hidden md:grid md:grid-cols-3 gap-8 md:gap-12 items-center'>
+            <div className='hidden md:block'>
+              <div className='grid md:grid-cols-3 gap-8 md:gap-12 items-center'>
               {/* Left Column */}
               <div className='space-y-6'>
                 {/* Feature 01 */}
@@ -270,6 +281,11 @@ export default function Home() {
                     src='/assets/img/Layer 2.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
+                    loading='lazy'
+                    onError={(e) => {
+                      console.error('Failed to load Layer 2.png');
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               </div>
@@ -301,6 +317,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </div>
 
@@ -313,6 +330,11 @@ export default function Home() {
               src='/assets/img/bg3.png'
               alt='Background'
               className='w-full h-full object-cover opacity-20'
+              loading='lazy'
+              onError={(e) => {
+                console.error('Failed to load bg3.png');
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
           
@@ -383,6 +405,11 @@ export default function Home() {
               src='/assets/img/bg4.png'
               alt='Background'
               className='w-full h-full object-cover opacity-20'
+              loading='lazy'
+              onError={(e) => {
+                console.error('Failed to load bg4.png');
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
           
@@ -406,6 +433,11 @@ export default function Home() {
                     src='/assets/img/Layer 3.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
+                    loading='lazy'
+                    onError={(e) => {
+                      console.error('Failed to load Layer 3.png');
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               </div>
@@ -453,6 +485,11 @@ export default function Home() {
                     src='/assets/img/Layer 3.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
+                    loading='lazy'
+                    onError={(e) => {
+                      console.error('Failed to load Layer 3.png (mobile)');
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               </div>
