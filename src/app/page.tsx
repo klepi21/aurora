@@ -209,6 +209,7 @@ export default function Home() {
                     alt='Aurora Football'
                     fill
                     className='object-contain'
+                    unoptimized
                   />
                 </div>
               </div>
@@ -248,6 +249,7 @@ export default function Home() {
                     alt='Aurora Football'
                     fill
                     className='object-contain'
+                    unoptimized
                   />
                 </div>
               </div>
@@ -359,6 +361,7 @@ export default function Home() {
                     alt='Aurora Football'
                     fill
                     className='object-contain'
+                    unoptimized
                   />
                 </div>
               </div>
@@ -407,6 +410,7 @@ export default function Home() {
                     alt='Aurora Football'
                     fill
                     className='object-contain'
+                    unoptimized
                   />
                 </div>
               </div>
