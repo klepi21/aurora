@@ -586,7 +586,7 @@ export default function App() {
                       <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
                       {/* Name overlay */}
                       <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
-                        <p className='text-base font-semibold text-white text-center drop-shadow-lg'>
+                        <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
                           {nft.name || nft.identifier}
                         </p>
                       </div>
@@ -611,7 +611,7 @@ export default function App() {
                       <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
                       {/* Name overlay */}
                       <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
-                        <p className='text-base font-semibold text-white text-center drop-shadow-lg'>
+                        <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
                           {nft.name || nft.identifier}
                         </p>
                       </div>

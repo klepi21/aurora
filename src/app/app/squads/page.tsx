@@ -504,7 +504,7 @@ export default function SquadsPage() {
           )}
         </div>
         {/* Name outside the circle */}
-        <p className='text-xs font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
+        <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
           {playerName}
         </p>
       </div>
@@ -729,9 +729,31 @@ export default function SquadsPage() {
                 <div className='text-center py-12 text-gray-400'>
                   <p className='text-base font-medium'>Loading players...</p>
                 </div>
-              ) : nfts.length > 0 ? (
-                <div className='grid grid-cols-2 gap-4'>
-                  {nfts.map((nft) => {
+              ) : (() => {
+                // Filter NFTs based on selected position
+                let filteredNfts = nfts;
+                if (selectedPosition) {
+                  if (selectedPosition.startsWith('DEF')) {
+                    // Filter for defenders - show only NFTs with [DEF] in name
+                    filteredNfts = nfts.filter((nft) => 
+                      (nft.name || nft.identifier).toUpperCase().includes('[DEF]')
+                    );
+                  } else if (selectedPosition.startsWith('ATT')) {
+                    // Filter for attackers - show only NFTs with [ATT] in name
+                    filteredNfts = nfts.filter((nft) => 
+                      (nft.name || nft.identifier).toUpperCase().includes('[ATT]')
+                    );
+                  } else if (selectedPosition === 'GK') {
+                    // Filter for goalkeepers - show only NFTs with [GK] in name
+                    filteredNfts = nfts.filter((nft) => 
+                      (nft.name || nft.identifier).toUpperCase().includes('[GK]')
+                    );
+                  }
+                }
+                
+                return filteredNfts.length > 0 ? (
+                  <div className='grid grid-cols-2 gap-4'>
+                    {filteredNfts.map((nft) => {
                     const imageUrl =
                       nft.media?.[0]?.url ||
                       nft.media?.[0]?.originalUrl ||
@@ -764,7 +786,7 @@ export default function SquadsPage() {
                             <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
                             {/* Name overlay */}
                             <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
-                              <p className='text-base font-semibold text-white text-center drop-shadow-lg'>
+                              <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
                                 {nft.name || nft.identifier}
                               </p>
                             </div>
@@ -789,7 +811,7 @@ export default function SquadsPage() {
                             <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
                             {/* Name overlay */}
                             <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
-                              <p className='text-base font-semibold text-white text-center drop-shadow-lg'>
+                              <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
                                 {nft.name || nft.identifier}
                               </p>
                             </div>
@@ -823,15 +845,18 @@ export default function SquadsPage() {
                       </div>
                     );
                   })}
-                </div>
-              ) : (
-                <div className='text-center py-12 text-gray-400'>
-                  <p className='text-base font-medium'>No players available</p>
-                  <p className='text-sm mt-2 text-gray-500'>
-                    Visit the Shop to purchase players!
-                  </p>
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <div className='text-center py-12 text-gray-400'>
+                    <p className='text-base font-medium'>
+                      No {selectedPosition?.startsWith('DEF') ? 'defenders' : selectedPosition?.startsWith('ATT') ? 'attackers' : selectedPosition === 'GK' ? 'goalkeepers' : 'players'} available
+                    </p>
+                    <p className='text-sm mt-2 text-gray-500'>
+                      Purchase players with [{selectedPosition?.startsWith('DEF') ? 'DEF' : selectedPosition?.startsWith('ATT') ? 'ATT' : selectedPosition === 'GK' ? 'GK' : ''}] to build your team!
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

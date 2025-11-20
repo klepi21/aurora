@@ -31,7 +31,13 @@ const OFFER_METADATA: Record<string, { name: string; image: string }> = {
   '1': { name: 'SALAH', image: 'https://ipfs.io/ipfs/bafybeibhhya4s6w6fxotuqcqpym2qqmzqcpceu5sanuztyyvc2ir6x4fga' },
   '2': { name: 'JULIAN', image: 'https://ipfs.io/ipfs/bafybeidqq6c6wqc5dvpsxehf6keumvrwug7wqqdyj6wb3w56ajqdyu3q4q' },
   '3': { name: 'DONA', image: 'https://ipfs.io/ipfs/bafybeidkvuxvnwmilzpbuwt5aqet4nnehog5sixka7zs5txlogntx64xry' },
-  '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum' }
+  '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum' },
+  '5': { name: 'GYOKERES', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-5cea45c3' },
+  '6': { name: 'KYLIAN', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a5abf52a' },
+  '7': { name: 'LEAO', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a750a842' },
+  '8': { name: 'DONARU', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-8678d8de' },
+  '9': { name: 'BASTONI', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-4d269c48' },
+  '10': { name: 'ARAUJO', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-2fa7b9ed' }
 };
 
 export default function ShopPage() {
