@@ -183,7 +183,7 @@ export default function Home() {
               <div className='flex items-center justify-center py-4'>
                 <div className='relative w-full aspect-square max-w-[250px] mx-auto'>
                   <img
-                    src='/assets/img/Layer 2.png'
+                    src='/assets/img/Layer%202.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
@@ -278,7 +278,7 @@ export default function Home() {
               <div className='flex items-center justify-center'>
                 <div className='relative w-full aspect-square'>
                   <img
-                    src='/assets/img/Layer 2.png'
+                    src='/assets/img/Layer%202.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
