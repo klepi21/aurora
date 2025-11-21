@@ -56,6 +56,7 @@ export default function SquadsPage() {
   const pendingTransactions = useGetPendingTransactions();
   const pitchRef = useRef<HTMLDivElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
 
   // Load team name from database
   useEffect(() => {
@@ -396,33 +397,29 @@ export default function SquadsPage() {
         useCORS: true
       });
       
-      // Convert canvas to blob
-      canvas.toBlob((blob: Blob | null) => {
-        if (!blob) {
-          setIsCapturing(false);
-          return;
-        }
-        
-        // Create a temporary URL for the image
-        const imageUrl = URL.createObjectURL(blob);
-        
-        // Create Twitter share URL with text
-        const text = encodeURIComponent('My AFL Team is Ready , are you be ready ? #afl #multiversx');
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${text}`;
-        
-        // Open Twitter in new window
-        window.open(twitterUrl, '_blank');
-        
-        // Clean up the URL after a delay
-        setTimeout(() => {
-          URL.revokeObjectURL(imageUrl);
-        }, 1000);
-        
-        setIsCapturing(false);
-      }, 'image/png');
+      // Convert canvas to data URL
+      const imageUrl = canvas.toDataURL('image/png');
+      setShareImageUrl(imageUrl);
+      setIsCapturing(false);
     } catch (error) {
       console.error('Error capturing team:', error);
       setIsCapturing(false);
+    }
+  };
+
+  const handleDownloadImage = () => {
+    if (!shareImageUrl) return;
+    
+    const link = document.createElement('a');
+    link.download = 'my-afl-team.png';
+    link.href = shareImageUrl;
+    link.click();
+  };
+
+  const handleCloseShareModal = () => {
+    if (shareImageUrl) {
+      // Clean up the data URL if it was created from blob
+      setShareImageUrl(null);
     }
   };
 
@@ -644,7 +641,7 @@ export default function SquadsPage() {
             onClick={handleShareTeam}
             disabled={isCapturing}
             className='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-600/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[60px]'
-            title='Share on Twitter'
+            title='Share Team'
           >
             {isCapturing ? (
               <svg className='animate-spin h-5 w-5' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
@@ -652,8 +649,12 @@ export default function SquadsPage() {
                 <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
               </svg>
             ) : (
-              <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
-                <path d='M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z'/>
+              <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                <circle cx='18' cy='5' r='3'></circle>
+                <circle cx='6' cy='12' r='3'></circle>
+                <circle cx='18' cy='19' r='3'></circle>
+                <line x1='8.59' y1='13.51' x2='15.42' y2='17.49'></line>
+                <line x1='15.41' y1='6.51' x2='8.59' y2='10.49'></line>
               </svg>
             )}
           </button>
@@ -924,6 +925,74 @@ export default function SquadsPage() {
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Team Image Modal */}
+      {shareImageUrl && (
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm'
+          onClick={handleCloseShareModal}
+        >
+          <div
+            className='relative max-w-2xl w-full bg-gradient-to-br from-gray-900/95 to-black rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl flex flex-col'
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className='flex items-center justify-between p-6 border-b border-gray-800/50'>
+              <h2 className='text-2xl font-bold text-white'>
+                Your Team
+              </h2>
+              <button
+                onClick={handleCloseShareModal}
+                className='p-2 hover:bg-gray-800/50 rounded-full transition-colors'
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={2}
+                  stroke='white'
+                  className='w-6 h-6'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Image Display */}
+            <div className='flex-1 overflow-y-auto p-6 flex items-center justify-center'>
+              <div className='relative w-full max-w-md'>
+                <img
+                  src={shareImageUrl}
+                  alt='My AFL Team'
+                  className='w-full h-auto rounded-xl shadow-2xl'
+                />
+              </div>
+            </div>
+
+            {/* Download Button */}
+            <div className='p-6 border-t border-gray-800/50'>
+              <button
+                onClick={handleDownloadImage}
+                className='w-full bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 flex items-center justify-center gap-2'
+              >
+                <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                  <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path>
+                  <polyline points='7 10 12 15 17 10'></polyline>
+                  <line x1='12' y1='15' x2='12' y2='3'></line>
+                </svg>
+                Download Image
+              </button>
+              <p className='text-sm text-white/60 text-center mt-3'>
+                Save the image and share it on your favorite platform!
+              </p>
             </div>
           </div>
         </div>
