@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get unique wallet addresses
-    const walletAddressesWithPlayers = [...new Set(
+    const walletAddressesWithPlayers = Array.from(new Set(
       (teamsWithPlayers || []).map(t => t.wallet_address)
-    )];
+    ));
 
     if (walletAddressesWithPlayers.length === 0) {
       return NextResponse.json({ success: true, data: [] });
