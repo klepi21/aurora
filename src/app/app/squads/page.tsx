@@ -386,19 +386,63 @@ export default function SquadsPage() {
     
     setIsCapturing(true);
     try {
+      // Wait for all images to load before capturing
+      const images = pitchRef.current.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            // Timeout after 5 seconds
+            setTimeout(() => resolve(null), 5000);
+          });
+        })
+      );
+
+      // Small delay to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Dynamically import html2canvas
       const html2canvas = (await import('html2canvas')).default;
       
-      // Capture the pitch area
+      // Capture the pitch area with improved settings
       const canvas = await html2canvas(pitchRef.current, {
         backgroundColor: '#0A3124',
         scale: 2,
         logging: false,
-        useCORS: true
+        useCORS: true,
+        allowTaint: false,
+        foreignObjectRendering: true,
+        imageTimeout: 15000,
+        removeContainer: false,
+        onclone: (clonedDoc) => {
+          // Ensure all images in cloned document have proper styling
+          const clonedImages = clonedDoc.querySelectorAll('img');
+          clonedImages.forEach((img) => {
+            const imgElement = img as HTMLImageElement;
+            imgElement.style.display = 'block';
+            imgElement.style.opacity = '1';
+            imgElement.style.visibility = 'visible';
+            // Ensure images are loaded
+            if (!imgElement.complete) {
+              imgElement.crossOrigin = 'anonymous';
+            }
+          });
+          
+          // Ensure text is visible
+          const textElements = clonedDoc.querySelectorAll('p');
+          textElements.forEach((p) => {
+            const pElement = p as HTMLParagraphElement;
+            pElement.style.visibility = 'visible';
+            pElement.style.opacity = '1';
+            pElement.style.color = '#ffffff';
+          });
+        }
       });
       
       // Convert canvas to data URL
-      const imageUrl = canvas.toDataURL('image/png');
+      const imageUrl = canvas.toDataURL('image/png', 1.0);
       setShareImageUrl(imageUrl);
       setIsCapturing(false);
     } catch (error) {
@@ -525,6 +569,8 @@ export default function SquadsPage() {
               src={imageUrl}
               alt={playerName}
               className='w-full h-full object-cover scale-110'
+              crossOrigin='anonymous'
+              loading='eager'
               onError={() => {
                 if (player?.identifier) {
                   setImageErrors((prev) => new Set(prev).add(player.identifier));
@@ -549,8 +595,8 @@ export default function SquadsPage() {
           )}
         </div>
         {/* Name outside the circle */}
-        <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
-          {playerName}
+        <p className='text-[10px] font-semibold text-white text-center max-w-[100px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-1' style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5)' }}>
+          {playerName.length > 12 ? `${playerName.slice(0, 12)}...` : playerName}
         </p>
       </div>
     );
