@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   useGetAccountInfo,
   useGetNetworkConfig,
@@ -54,6 +54,8 @@ export default function SquadsPage() {
   });
   const [pendingTransferTxHash, setPendingTransferTxHash] = useState<string>('');
   const pendingTransactions = useGetPendingTransactions();
+  const pitchRef = useRef<HTMLDivElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   // Load team name from database
   useEffect(() => {
@@ -378,6 +380,52 @@ export default function SquadsPage() {
     }
   };
 
+  const handleShareTeam = async () => {
+    if (!pitchRef.current) return;
+    
+    setIsCapturing(true);
+    try {
+      // Dynamically import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Capture the pitch area
+      const canvas = await html2canvas(pitchRef.current, {
+        backgroundColor: '#0A3124',
+        scale: 2,
+        logging: false,
+        useCORS: true
+      });
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob: Blob | null) => {
+        if (!blob) {
+          setIsCapturing(false);
+          return;
+        }
+        
+        // Create a temporary URL for the image
+        const imageUrl = URL.createObjectURL(blob);
+        
+        // Create Twitter share URL with text
+        const text = encodeURIComponent('My AFL Team is Ready , are you be ready ? #afl #multiversx');
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${text}`;
+        
+        // Open Twitter in new window
+        window.open(twitterUrl, '_blank');
+        
+        // Clean up the URL after a delay
+        setTimeout(() => {
+          URL.revokeObjectURL(imageUrl);
+        }, 1000);
+        
+        setIsCapturing(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error capturing team:', error);
+      setIsCapturing(false);
+    }
+  };
+
   const handleSaveTeam = async () => {
     if (!address || !isAllPositionsFilled() || isSavingTeam) return;
 
@@ -514,7 +562,7 @@ export default function SquadsPage() {
   return (
     <div className='flex flex-col w-full gap-5 pb-6'>
       {/* Football Pitch Container */}
-      <div className='relative w-full bg-gradient-to-b from-[#0A3124] to-[#0A3124]/80 rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl'>
+      <div ref={pitchRef} className='relative w-full bg-gradient-to-b from-[#0A3124] to-[#0A3124]/80 rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl'>
         {/* Pitch Background with Image */}
         <div className='relative w-full aspect-[3/4] overflow-hidden'>
           <Image
@@ -585,12 +633,31 @@ export default function SquadsPage() {
 
       {/* Transfer Mode Controls */}
       {teamSaved && !isTransferMode && (
-        <button
-          onClick={handleStartTransfer}
-          className='w-full bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98'
-        >
-          Transfer Players
-        </button>
+        <div className='flex gap-3'>
+          <button
+            onClick={handleStartTransfer}
+            className='flex-1 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98'
+          >
+            Transfer Players
+          </button>
+          <button
+            onClick={handleShareTeam}
+            disabled={isCapturing}
+            className='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-600/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[60px]'
+            title='Share on Twitter'
+          >
+            {isCapturing ? (
+              <svg className='animate-spin h-5 w-5' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+              </svg>
+            ) : (
+              <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
+                <path d='M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z'/>
+              </svg>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Transfer Mode Active - Show Save/Cancel */}
