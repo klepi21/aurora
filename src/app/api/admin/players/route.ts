@@ -87,6 +87,46 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * Calculate and update total points for a user based on their team players
+ */
+async function calculateAndUpdateUserPoints(wallet_address: string) {
+  try {
+    // Get user's team players
+    const { data: userTeam, error: teamError } = await supabaseAdmin
+      .from('user_teams')
+      .select('player_nft_identifier')
+      .eq('wallet_address', wallet_address);
+
+    if (teamError || !userTeam || userTeam.length === 0) {
+      return;
+    }
+
+    const playerIdentifiers = userTeam.map((t) => t.player_nft_identifier);
+
+    // Get points for each player
+    const { data: players, error: playersError } = await supabaseAdmin
+      .from('players')
+      .select('points')
+      .in('nft_identifier', playerIdentifiers);
+
+    if (playersError || !players) {
+      return;
+    }
+
+    // Calculate total
+    const totalPoints = players.reduce((sum, player) => sum + (player.points || 0), 0);
+
+    // Update user's total_points
+    await supabaseAdmin
+      .from('users')
+      .update({ total_points: totalPoints })
+      .eq('wallet_address', wallet_address);
+  } catch (error) {
+    console.error(`Error calculating points for user ${wallet_address}:`, error);
+  }
+}
+
+/**
  * PUT /api/admin/players
  * Update player points (add or subtract)
  */
@@ -118,6 +158,7 @@ export async function PUT(request: NextRequest) {
 
     const newPoints = Math.max(0, (currentPlayer.points || 0) + points_change);
 
+    // Update player points
     const { data, error } = await supabaseAdmin
       .from('players')
       .update({ points: newPoints })
@@ -131,6 +172,26 @@ export async function PUT(request: NextRequest) {
         { error: 'Failed to update player points' },
         { status: 500 }
       );
+    }
+
+    // Find all users who have this player in their team
+    const { data: userTeams, error: userTeamsError } = await supabaseAdmin
+      .from('user_teams')
+      .select('wallet_address')
+      .eq('player_nft_identifier', nft_identifier);
+
+    if (userTeamsError) {
+      console.error('Error fetching user teams:', userTeamsError);
+      // Continue even if this fails - player points are already updated
+    } else if (userTeams && userTeams.length > 0) {
+      // Get unique wallet addresses
+      const uniqueWallets = Array.from(new Set(userTeams.map((ut) => ut.wallet_address)));
+
+      // Recalculate points for all affected users
+      const updatePromises = uniqueWallets.map((wallet) => calculateAndUpdateUserPoints(wallet));
+      await Promise.all(updatePromises);
+
+      console.log(`Updated points for ${uniqueWallets.length} user(s) who have player ${nft_identifier}`);
     }
 
     return NextResponse.json({ success: true, data });
