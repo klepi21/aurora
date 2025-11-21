@@ -11,9 +11,34 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '100', 10);
 
+    // First, get all wallet addresses that have players in user_teams
+    const { data: teamsWithPlayers, error: teamsError } = await supabaseAdmin
+      .from('user_teams')
+      .select('wallet_address')
+      .limit(10000); // Get all teams with players
+
+    if (teamsError) {
+      console.error('Error fetching teams with players:', teamsError);
+      return NextResponse.json(
+        { error: 'Failed to fetch teams with players' },
+        { status: 500 }
+      );
+    }
+
+    // Get unique wallet addresses
+    const walletAddressesWithPlayers = [...new Set(
+      (teamsWithPlayers || []).map(t => t.wallet_address)
+    )];
+
+    if (walletAddressesWithPlayers.length === 0) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+
+    // Now fetch users who have players, sorted by points
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('wallet_address, team_name, total_points, submitted_at')
+      .in('wallet_address', walletAddressesWithPlayers)
       .order('total_points', { ascending: false, nullsFirst: false })
       .limit(limit);
 
