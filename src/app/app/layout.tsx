@@ -17,7 +17,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
               {/* Image */}
               <div className='relative w-full max-w-[200px] aspect-square mb-4'>
                 <img
-                  src='/assets/img/Layer 3.png'
+                  src='/assets/img/Layer-3.png'
                   alt='Aurora Football'
                   className='w-full h-full object-contain'
                   loading='lazy'

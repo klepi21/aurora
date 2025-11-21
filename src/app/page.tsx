@@ -141,12 +141,12 @@ export default function Home() {
             <div className='relative flex items-center justify-center py-8 md:py-12'>
               <div className='relative w-full max-w-md aspect-square'>
                 <img
-                  src='/assets/img/Layer%201.png'
+                  src='/assets/img/Layer-1.png'
                   alt='Aurora Football League'
                   className='w-full h-full object-contain scale-x-[-1]'
                   loading='lazy'
                   onError={(e) => {
-                    console.error('Failed to load Layer 1.png');
+                    console.error('Failed to load Layer-1.png');
                     e.currentTarget.style.display = 'none';
                   }}
                 />
@@ -188,12 +188,12 @@ export default function Home() {
               <div className='flex items-center justify-center py-4'>
                 <div className='relative w-full aspect-square max-w-[250px] mx-auto'>
                   <img
-                    src='/assets/img/Layer%202.png'
+                    src='/assets/img/Layer-2.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
                     onError={(e) => {
-                      console.error('Failed to load Layer 2.png (mobile)');
+                      console.error('Failed to load Layer-2.png (mobile)');
                       e.currentTarget.style.display = 'none';
                     }}
                   />
@@ -283,12 +283,12 @@ export default function Home() {
               <div className='flex items-center justify-center'>
                 <div className='relative w-full aspect-square'>
                   <img
-                    src='/assets/img/Layer%202.png'
+                    src='/assets/img/Layer-2.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
                     onError={(e) => {
-                      console.error('Failed to load Layer 2.png');
+                      console.error('Failed to load Layer-2.png');
                       e.currentTarget.style.display = 'none';
                     }}
                   />
@@ -435,12 +435,12 @@ export default function Home() {
               <div className='hidden md:flex items-center justify-center order-2 md:order-1'>
                 <div className='relative w-full aspect-square'>
                   <img
-                    src='/assets/img/Layer%203.png'
+                    src='/assets/img/Layer-3.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
                     onError={(e) => {
-                      console.error('Failed to load Layer 3.png');
+                      console.error('Failed to load Layer-3.png');
                       e.currentTarget.style.display = 'none';
                     }}
                   />
@@ -487,12 +487,12 @@ export default function Home() {
               <div className='md:hidden col-span-2 flex items-center justify-center py-6 order-1'>
                 <div className='relative w-full aspect-square max-w-[200px] mx-auto'>
                   <img
-                    src='/assets/img/Layer%203.png'
+                    src='/assets/img/Layer-3.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
                     onError={(e) => {
-                      console.error('Failed to load Layer 3.png (mobile)');
+                      console.error('Failed to load Layer-3.png (mobile)');
                       e.currentTarget.style.display = 'none';
                     }}
                   />
