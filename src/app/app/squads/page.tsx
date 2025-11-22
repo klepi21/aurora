@@ -541,11 +541,26 @@ export default function SquadsPage() {
         setTeamSaved(true);
         setShowSuccessNotification(true);
         
-        // Load updated team points
+        success('Team saved successfully!', 4000);
+        
+        // Load updated team points and player points
         const teamResponse = await fetch(`/api/teams?wallet_address=${address}`);
         const teamResult = await teamResponse.json();
         if (teamResult.success && teamResult.data) {
           setTeamPoints(teamResult.data.total_points || 0);
+        }
+
+        // Fetch player points
+        const playersResponse = await fetch(`/api/teams/players?wallet_address=${address}`);
+        const playersResult = await playersResponse.json();
+        if (playersResult.success && playersResult.data) {
+          const pointsMap: Record<string, number> = {};
+          playersResult.data.forEach((player: { player_nft_identifier: string; points?: number }) => {
+            if (player.points !== undefined) {
+              pointsMap[player.player_nft_identifier] = player.points;
+            }
+          });
+          setPlayerPoints(pointsMap);
         }
 
         // Hide notification after 3 seconds
