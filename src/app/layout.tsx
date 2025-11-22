@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { Metadata } from 'next';
+import Script from 'next/script';
 import { Inter } from 'next/font/google';
 import { ConditionalLayout } from '@/components/Layout';
 import App from './index';
@@ -58,6 +59,21 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang='en' className={inter.className}>
+      <head>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src='https://www.googletagmanager.com/gtag/js?id=G-N3FRGJME9R'
+          strategy='afterInteractive'
+        />
+        <Script id='google-analytics' strategy='afterInteractive'>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-N3FRGJME9R');
+          `}
+        </Script>
+      </head>
       <body>
         <InitAppWrapper>
           <App>
