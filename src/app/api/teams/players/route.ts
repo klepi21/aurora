@@ -31,7 +31,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data: data || [] });
+    // Get player points for each player
+    const playerIdentifiers = (data || []).map((p) => p.player_nft_identifier);
+    let playerPointsMap: Record<string, number> = {};
+
+    if (playerIdentifiers.length > 0) {
+      const { data: playersData, error: playersError } = await supabaseAdmin
+        .from('players')
+        .select('nft_identifier, points')
+        .in('nft_identifier', playerIdentifiers);
+
+      if (!playersError && playersData) {
+        playerPointsMap = playersData.reduce((acc, player) => {
+          acc[player.nft_identifier] = player.points || 0;
+          return acc;
+        }, {} as Record<string, number>);
+      }
+    }
+
+    // Add points to each player data
+    const dataWithPoints = (data || []).map((player) => ({
+      ...player,
+      points: playerPointsMap[player.player_nft_identifier] || 0
+    }));
+
+    return NextResponse.json({ success: true, data: dataWithPoints });
   } catch (error) {
     console.error('Error in GET /api/teams/players:', error);
     return NextResponse.json(

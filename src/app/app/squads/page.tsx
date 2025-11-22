@@ -59,6 +59,7 @@ export default function SquadsPage() {
   const pitchRef = useRef<HTMLDivElement>(null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [playerPoints, setPlayerPoints] = useState<Record<string, number>>({});
 
   // Load team name from database
   useEffect(() => {
@@ -98,16 +99,21 @@ export default function SquadsPage() {
             GK: null
           };
 
-          // Match NFT identifiers with loaded NFTs
-          teamPlayersResult.data.forEach((player: { position: string; player_nft_identifier: string }) => {
+          // Match NFT identifiers with loaded NFTs and store points
+          const pointsMap: Record<string, number> = {};
+          teamPlayersResult.data.forEach((player: { position: string; player_nft_identifier: string; points?: number }) => {
             const matchedNft = nfts.find((nft) => nft.identifier === player.player_nft_identifier);
             if (matchedNft) {
               players[player.position] = matchedNft;
+              if (player.points !== undefined) {
+                pointsMap[player.player_nft_identifier] = player.points;
+              }
             }
           });
 
           setSelectedPlayers(players);
           setOriginalPlayers({ ...players }); // Store original for comparison
+          setPlayerPoints(pointsMap);
           setTeamSaved(true);
         } else {
           setTeamSaved(false);
@@ -256,11 +262,24 @@ export default function SquadsPage() {
           success('Team saved successfully!', 4000);
         }
         
-        // Load updated team points
+        // Load updated team points and player points
         const teamResponse = await fetch(`/api/teams?wallet_address=${address}`);
         const teamResult = await teamResponse.json();
         if (teamResult.success && teamResult.data) {
           setTeamPoints(teamResult.data.total_points || 0);
+        }
+
+        // Fetch player points
+        const playersResponse = await fetch(`/api/teams/players?wallet_address=${address}`);
+        const playersResult = await playersResponse.json();
+        if (playersResult.success && playersResult.data) {
+          const pointsMap: Record<string, number> = {};
+          playersResult.data.forEach((player: { player_nft_identifier: string; points?: number }) => {
+            if (player.points !== undefined) {
+              pointsMap[player.player_nft_identifier] = player.points;
+            }
+          });
+          setPlayerPoints(pointsMap);
         }
 
         // Hide notification after 3 seconds
@@ -556,6 +575,7 @@ export default function SquadsPage() {
     position: string;
     player: NFT | null;
   }) => {
+    const playerPointsValue = player?.identifier ? playerPoints[player.identifier] : undefined;
     const imageUrl = getPlayerImage(player);
     
     // Get position label based on position key
@@ -607,9 +627,17 @@ export default function SquadsPage() {
           )}
         </div>
         {/* Name outside the circle */}
-        <p className='text-[10px] font-semibold text-white text-center max-w-[100px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-1' style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5)' }}>
-          {playerName.length > 12 ? `${playerName.slice(0, 12)}...` : playerName}
-        </p>
+        <div className='flex flex-col items-center gap-0.5'>
+          <p className='text-[10px] font-semibold text-white text-center max-w-[100px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-1' style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5)' }}>
+            {playerName.length > 12 ? `${playerName.slice(0, 12)}...` : playerName}
+          </p>
+          {/* Show points when team is saved */}
+          {teamSaved && player && playerPointsValue !== undefined && (
+            <p className='text-[9px] font-bold text-[#3EB489] text-center drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+              {playerPointsValue} P
+            </p>
+          )}
+        </div>
       </div>
     );
   };
