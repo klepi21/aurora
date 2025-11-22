@@ -647,7 +647,7 @@ export default function SquadsPage() {
           <p className='text-sm text-gray-400 text-center'>
             Select them or{' '}
               <a
-                href='/app/leaderboard'
+                href='/app/shop'
                 className='text-[#3EB489] hover:text-[#8ED6C1] font-semibold underline transition-colors'
               >
                 purchase some from here

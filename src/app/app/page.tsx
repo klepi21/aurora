@@ -552,7 +552,7 @@ export default function App() {
         <div className='flex items-center justify-between mb-5'>
           <p className='text-xs font-medium text-gray-400 uppercase tracking-wider'>My Squad</p>
               <a
-                href='/app/leaderboard'
+                href='/app/shop'
                 className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white text-xs font-semibold rounded-xl shadow-lg transition-all active:scale-95'
               >
                 Buy More
