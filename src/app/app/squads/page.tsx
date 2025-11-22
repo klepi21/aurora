@@ -660,7 +660,7 @@ export default function SquadsPage() {
       loadImageWithDelay();
     }, [player]);
 
-    const handleImageError = () => {
+    const handleImageError = async () => {
       if (!player) return;
       
       // Get all possible sources
@@ -674,9 +674,21 @@ export default function SquadsPage() {
 
       const currentIndex = sources.indexOf(imageSrc || '');
       
-      // Try next source
+      // Try next source with delay
       if (currentIndex < sources.length - 1) {
+        // Wait for queue
+        while (imageLoadRef.current.processing) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        imageLoadRef.current.processing = true;
+        
+        // Add delay before trying next source (0.35 seconds)
+        await new Promise(resolve => setTimeout(resolve, 350));
+        
         setImageSrc(sources[currentIndex + 1]);
+        
+        imageLoadRef.current.processing = false;
       } else {
         // All sources failed
         setImageError(true);
