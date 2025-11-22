@@ -60,6 +60,8 @@ export default function SquadsPage() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const [playerPoints, setPlayerPoints] = useState<Record<string, number>>({});
+  const [imageLoadQueue, setImageLoadQueue] = useState<Set<string>>(new Set());
+  const imageLoadRef = useRef<{ queue: string[]; processing: boolean }>({ queue: [], processing: false });
 
   // Load team name from database
   useEffect(() => {
@@ -580,7 +582,18 @@ export default function SquadsPage() {
 
   const getPlayerImage = (nft: NFT | null) => {
     if (!nft) return null;
-    return nft.media?.[0]?.url || nft.media?.[0]?.originalUrl || nft.url || null;
+    
+    // Try multiple image sources in order of preference
+    const imageSources = [
+      nft.media?.[0]?.url,
+      nft.media?.[0]?.originalUrl,
+      nft.url,
+      // Fallback to MultiversX media API
+      nft.identifier ? `https://devnet-media.multiversx.com/nfts/thumbnail/${nft.identifier}` : null,
+      nft.identifier ? `https://devnet-api.multiversx.com/nfts/${nft.identifier}/thumbnail` : null
+    ].filter(Boolean) as string[];
+    
+    return imageSources[0] || null;
   };
 
   const PlayerPlaceholder = ({
@@ -591,7 +604,8 @@ export default function SquadsPage() {
     player: NFT | null;
   }) => {
     const playerPointsValue = player?.identifier ? playerPoints[player.identifier] : undefined;
-    const imageUrl = getPlayerImage(player);
+    const [imageError, setImageError] = useState(false);
+    const [imageSrc, setImageSrc] = useState<string | null>(null);
     
     // Get position label based on position key
     const getPositionLabel = (pos: string) => {
@@ -603,6 +617,75 @@ export default function SquadsPage() {
     
     const playerName = player?.name || getPositionLabel(position);
 
+    // Get all possible image sources and try them in order with delay
+    useEffect(() => {
+      if (!player) {
+        setImageSrc(null);
+        setImageError(false);
+        return;
+      }
+
+      const sources = [
+        player.media?.[0]?.url,
+        player.media?.[0]?.originalUrl,
+        player.url,
+        `https://devnet-media.multiversx.com/nfts/thumbnail/${player.identifier}`,
+        `https://devnet-api.multiversx.com/nfts/${player.identifier}/thumbnail`
+      ].filter(Boolean) as string[];
+
+      if (sources.length === 0) {
+        setImageError(true);
+        return;
+      }
+
+      // Add to queue for delayed loading
+      const loadImageWithDelay = async () => {
+        // Wait for queue
+        while (imageLoadRef.current.processing) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        imageLoadRef.current.processing = true;
+        
+        // Add delay before loading (0.35 seconds)
+        await new Promise(resolve => setTimeout(resolve, 350));
+        
+        // Try first source
+        setImageSrc(sources[0]);
+        setImageError(false);
+        
+        imageLoadRef.current.processing = false;
+      };
+
+      loadImageWithDelay();
+    }, [player]);
+
+    const handleImageError = () => {
+      if (!player) return;
+      
+      // Get all possible sources
+      const sources = [
+        player.media?.[0]?.url,
+        player.media?.[0]?.originalUrl,
+        player.url,
+        `https://devnet-media.multiversx.com/nfts/thumbnail/${player.identifier}`,
+        `https://devnet-api.multiversx.com/nfts/${player.identifier}/thumbnail`
+      ].filter(Boolean) as string[];
+
+      const currentIndex = sources.indexOf(imageSrc || '');
+      
+      // Try next source
+      if (currentIndex < sources.length - 1) {
+        setImageSrc(sources[currentIndex + 1]);
+      } else {
+        // All sources failed
+        setImageError(true);
+        if (player.identifier) {
+          setImageErrors((prev) => new Set(prev).add(player.identifier));
+        }
+      }
+    };
+
     return (
       <div className='flex flex-col items-center gap-2'>
       <div
@@ -611,18 +694,16 @@ export default function SquadsPage() {
           (teamSaved && !isTransferMode) ? 'cursor-default' : 'cursor-pointer hover:border-white/60 hover:scale-110 transition-all'
         }`}
       >
-          {imageUrl && !imageErrors.has(player?.identifier || '') ? (
+          {imageSrc && !imageError && !imageErrors.has(player?.identifier || '') ? (
             <img
-              src={imageUrl}
+              key={imageSrc}
+              src={imageSrc}
               alt={playerName}
               className='w-full h-full object-cover scale-110'
               crossOrigin='anonymous'
               loading='eager'
-              onError={() => {
-                if (player?.identifier) {
-                  setImageErrors((prev) => new Set(prev).add(player.identifier));
-                }
-              }}
+              onError={handleImageError}
+              onLoad={() => setImageError(false)}
             />
           ) : (
             <svg
