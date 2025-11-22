@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/Button';
 import { ACCOUNTS_ENDPOINT, GAS_PRICE } from '@/localConstants';
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
+import { useToastContext } from '@/components/Toast';
 import Image from 'next/image';
 
 const NFT_COLLECTION = 'FOOT-9e4e8c';
@@ -31,6 +32,7 @@ interface NFT {
 export default function App() {
   const { address, account } = useGetAccountInfo();
   const { network } = useGetNetworkConfig();
+  const { success, error: showError } = useToastContext();
   const [teamName, setTeamName] = useState<string>('');
   const [teamNameInput, setTeamNameInput] = useState('');
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
@@ -148,6 +150,9 @@ export default function App() {
                     setIsSubmittingTeam(false);
                     setTeamSubmitError('');
                     
+                    const action = isEditingTeamName ? 'updated' : 'created';
+                    success(`Team name ${action} successfully!`, 4000);
+                    
                     // Refresh team data to get updated ranking and points
                     const refreshResponse = await fetch(`/api/teams?wallet_address=${address}`);
                     const refreshResult = await refreshResponse.json();
@@ -163,14 +168,18 @@ export default function App() {
                     throw new Error(saveResult.error || 'Failed to save team name');
                   }
                 } catch (dbError: unknown) {
+                  const errorMsg = (dbError as Error)?.message || 'Transaction succeeded but failed to save team name. Please try again.';
                   console.error('Error saving team name to database:', dbError);
-                  setTeamSubmitError((dbError as Error)?.message || 'Transaction succeeded but failed to save team name. Please try again.');
+                  setTeamSubmitError(errorMsg);
+                  showError(errorMsg, 4000);
                   setIsSubmittingTeam(false);
                   setPendingTxHash('');
                 }
               } else {
                 // Transaction failed
-                setTeamSubmitError('Transaction failed. Please try again.');
+                const errorMsg = 'Transaction failed. Please try again.';
+                setTeamSubmitError(errorMsg);
+                showError(errorMsg, 4000);
                 setIsSubmittingTeam(false);
                 setPendingTxHash('');
               }
@@ -203,7 +212,7 @@ export default function App() {
         checkTransactionStatus();
       }
     }
-  }, [pendingTransactions, pendingTxHash, teamNameInput, address, network.apiAddress]);
+  }, [pendingTransactions, pendingTxHash, teamNameInput, address, network.apiAddress, isEditingTeamName, success, showError]);
 
   // Calculate required amount based on create/edit mode
   const getRequiredAmount = () => {

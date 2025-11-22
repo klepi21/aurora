@@ -13,6 +13,7 @@ import {
 import { BigUIntValue, AddressValue } from '@multiversx/sdk-core';
 import { Button } from '@/components/Button';
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
+import { useToastContext } from '@/components/Toast';
 import nfthubAbi from '@/contracts/nfthub.abi.json';
 
 const NFT_HUB_CONTRACT = 'erd1qqqqqqqqqqqqqpgqs6q7vk3n68pdk89tzxwn7pvfplw600ypfsmsd66w6u';
@@ -26,26 +27,30 @@ interface Offer {
   availableCount: number;
 }
 
-// Offer metadata mapping
-const OFFER_METADATA: Record<string, { name: string; image: string }> = {
-  '1': { name: 'SALAH', image: 'https://ipfs.io/ipfs/bafybeibhhya4s6w6fxotuqcqpym2qqmzqcpceu5sanuztyyvc2ir6x4fga' },
-  '2': { name: 'JULIAN', image: 'https://ipfs.io/ipfs/bafybeidqq6c6wqc5dvpsxehf6keumvrwug7wqqdyj6wb3w56ajqdyu3q4q' },
-  '3': { name: 'DONA', image: 'https://ipfs.io/ipfs/bafybeidkvuxvnwmilzpbuwt5aqet4nnehog5sixka7zs5txlogntx64xry' },
-  '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum' },
-  '5': { name: 'GYOKERES', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-5cea45c3' },
-  '6': { name: 'KYLIAN', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a5abf52a' },
-  '7': { name: 'LEAO', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a750a842' },
-  '8': { name: 'DONARU', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-8678d8de' },
-  '9': { name: 'BASTONI', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-4d269c48' },
-  '10': { name: 'ARAUJO', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-2fa7b9ed' }
+type PlayerPosition = 'ATT' | 'DEF' | 'GK';
+
+// Offer metadata mapping with positions
+const OFFER_METADATA: Record<string, { name: string; image: string; position: PlayerPosition }> = {
+  '1': { name: 'SALAH', image: 'https://ipfs.io/ipfs/bafybeibhhya4s6w6fxotuqcqpym2qqmzqcpceu5sanuztyyvc2ir6x4fga', position: 'ATT' },
+  '2': { name: 'JULIAN', image: 'https://ipfs.io/ipfs/bafybeidqq6c6wqc5dvpsxehf6keumvrwug7wqqdyj6wb3w56ajqdyu3q4q', position: 'ATT' },
+  '3': { name: 'DONA', image: 'https://ipfs.io/ipfs/bafybeidkvuxvnwmilzpbuwt5aqet4nnehog5sixka7zs5txlogntx64xry', position: 'GK' },
+  '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum', position: 'DEF' },
+  '5': { name: 'GYOKERES', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-5cea45c3', position: 'ATT' },
+  '6': { name: 'KYLIAN', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a5abf52a', position: 'ATT' },
+  '7': { name: 'LEAO', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a750a842', position: 'ATT' },
+  '8': { name: 'DONARU', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-8678d8de', position: 'GK' },
+  '9': { name: 'BASTONI', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-4d269c48', position: 'DEF' },
+  '10': { name: 'ARAUJO', image: 'https://devnet-media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-2fa7b9ed', position: 'DEF' }
 };
 
 export default function ShopPage() {
   const { address } = useGetAccountInfo();
   const { network } = useGetNetworkConfig();
+  const { success, error: showError } = useToastContext();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [buyingOfferId, setBuyingOfferId] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<PlayerPosition | 'ALL'>('ALL');
 
   // Fetch all offers from contract
   useEffect(() => {
@@ -312,10 +317,15 @@ export default function ShopPage() {
         }
       });
 
+      const playerName = OFFER_METADATA[offerId]?.name || 'Player';
+      success(`Successfully purchased ${playerName}!`, 4000);
+      
       // Refresh offers after purchase
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
-      alert('Failed to purchase NFT. Please try again.');
+      showError('Failed to purchase NFT. Please try again.', 4000);
     } finally {
       setBuyingOfferId(null);
     }
@@ -339,24 +349,77 @@ export default function ShopPage() {
     return `${priceNum.toString()} ${token}`;
   };
 
+  // Filter offers based on selected position
+  const filteredOffers = selectedFilter === 'ALL' 
+    ? offers 
+    : offers.filter(offer => OFFER_METADATA[offer.id]?.position === selectedFilter);
+
   return (
     <div className='flex flex-col w-full gap-6'>
       <div className='flex items-center justify-between'>
         <h1 className='text-3xl font-bold text-white'>AFL Transfer HUB</h1>
       </div>
 
+      {/* Position Filters */}
+      <div className='flex flex-wrap gap-2'>
+        <button
+          onClick={() => setSelectedFilter('ALL')}
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+            selectedFilter === 'ALL'
+              ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
+              : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
+          }`}
+        >
+          All Players
+        </button>
+        <button
+          onClick={() => setSelectedFilter('ATT')}
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+            selectedFilter === 'ATT'
+              ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
+              : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
+          }`}
+        >
+          ⚽ Attackers
+        </button>
+        <button
+          onClick={() => setSelectedFilter('DEF')}
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+            selectedFilter === 'DEF'
+              ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
+              : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
+          }`}
+        >
+          🛡️ Defenders
+        </button>
+        <button
+          onClick={() => setSelectedFilter('GK')}
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+            selectedFilter === 'GK'
+              ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
+              : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
+          }`}
+        >
+          🥅 Goalkeepers
+        </button>
+      </div>
+
       {loading ? (
         <div className='flex items-center justify-center py-12'>
           <div className='text-white/70'>Loading offers...</div>
         </div>
-      ) : offers.length === 0 ? (
+      ) : filteredOffers.length === 0 ? (
         <div className='flex flex-col items-center justify-center py-12 gap-4'>
-          <p className='text-white/70 text-lg'>Players will be here</p>
+          <p className='text-white/70 text-lg'>
+            {selectedFilter === 'ALL' 
+              ? 'Players will be here' 
+              : `No ${selectedFilter === 'ATT' ? 'attackers' : selectedFilter === 'DEF' ? 'defenders' : 'goalkeepers'} available`}
+          </p>
           <p className='text-white/50 text-sm'>Check back later for new player listings</p>
         </div>
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          {offers.map((offer) => (
+          {filteredOffers.map((offer) => (
             <div
               key={offer.id}
               className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden hover:border-[#3EB489]/50 transition-all'

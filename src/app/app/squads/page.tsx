@@ -9,6 +9,7 @@ import {
 } from '@/lib';
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
 import { GAS_PRICE } from '@/localConstants';
+import { useToastContext } from '@/components/Toast';
 import Image from 'next/image';
 import pitchImage from '../../../../public/assets/img/pitch.png';
 
@@ -27,6 +28,7 @@ interface NFT {
 export default function SquadsPage() {
   const { address } = useGetAccountInfo();
   const { network } = useGetNetworkConfig();
+  const { success, error: showError } = useToastContext();
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loadingNfts, setLoadingNfts] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
@@ -247,6 +249,13 @@ export default function SquadsPage() {
         setPendingTransferTxHash('');
         setIsSavingTeam(false);
         
+        const changedCount = getChangedPlayersCount();
+        if (changedCount > 0) {
+          success(`Transfer completed! ${changedCount} player${changedCount !== 1 ? 's' : ''} updated.`, 4000);
+        } else {
+          success('Team saved successfully!', 4000);
+        }
+        
         // Load updated team points
         const teamResponse = await fetch(`/api/teams?wallet_address=${address}`);
         const teamResult = await teamResponse.json();
@@ -262,12 +271,13 @@ export default function SquadsPage() {
         throw new Error(result.error || 'Failed to save team');
       }
     } catch (error: unknown) {
-      console.error('Error saving team:', error);
-      setSaveError((error as Error)?.message || 'Failed to save team. Please try again.');
+      const errorMessage = (error as Error)?.message || 'Failed to save team. Please try again.';
+      setSaveError(errorMessage);
+      showError(errorMessage, 4000);
       setIsSavingTeam(false);
       setPendingTransferTxHash('');
     }
-  }, [address, teamName, selectedPlayers]);
+  }, [address, teamName, selectedPlayers, success, showError]);
 
   // Check if pending transfer transaction was successful
   useEffect(() => {
@@ -290,7 +300,9 @@ export default function SquadsPage() {
               await saveTeamToDatabase();
             } else {
               // Transaction failed
-              setSaveError('Transfer payment failed. Please try again.');
+              const errorMsg = 'Transfer payment failed. Please try again.';
+              setSaveError(errorMsg);
+              showError(errorMsg, 4000);
               setIsSavingTeam(false);
               setPendingTransferTxHash('');
             }
