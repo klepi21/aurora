@@ -73,26 +73,18 @@ export default function ShopPage() {
 
         const parsedOffers: Offer[] = [];
         
-        console.log('=== getAllOffers Result ===');
-        console.log('allOffersResult:', allOffersResult);
-        console.log('Type:', typeof allOffersResult);
-        console.log('Is Array:', Array.isArray(allOffersResult));
-        
-        // The result structure based on console logs: 
-        // Result has key '0' containing array of tuples: [{field0: Offer, field1: count}, ...]
+        // The result structure: Result has key '0' containing array of tuples: [{field0: Offer, field1: count}, ...]
         if (allOffersResult) {
           let tuplesArray: any[] = [];
           
           // Get the value - it might be an object with numeric keys
           const resultValue = allOffersResult.valueOf ? allOffersResult.valueOf() : allOffersResult;
-          console.log('resultValue:', resultValue);
           
           if (Array.isArray(resultValue)) {
             tuplesArray = resultValue;
           } else if (typeof resultValue === 'object' && resultValue !== null) {
             // Check if it has numeric keys like '0'
             const keys = Object.keys(resultValue);
-            console.log('Object keys:', keys);
             
             // Get the first array value (usually key '0')
             if (keys.length > 0 && Array.isArray((resultValue as any)[keys[0]])) {
@@ -143,7 +135,7 @@ export default function ShopPage() {
                     creator = creatorAddress.toBech32();
                   }
                 } catch (addrError) {
-                  console.error('Error converting address:', addrError);
+                  // Error converting address, skip
                 }
               }
               
@@ -167,7 +159,7 @@ export default function ShopPage() {
                 });
               }
             } catch (error) {
-              console.error(`Error parsing tuple ${i}:`, error, tuple);
+              // Error parsing tuple, skip
             }
           }
         }
@@ -185,38 +177,88 @@ export default function ShopPage() {
               let availableCount = 0;
               if (availableNftsResult) {
                 const nftsValue = availableNftsResult.valueOf ? availableNftsResult.valueOf() : availableNftsResult;
-                console.log(`Available NFTs result for offer ${offer.id}:`, nftsValue);
-                console.log(`Type:`, typeof nftsValue, 'Is Array:', Array.isArray(nftsValue));
+                console.log(`=== Available NFTs DEBUG for offer ${offer.id} ===`);
+                console.log('Raw result:', availableNftsResult);
+                console.log('nftsValue:', nftsValue);
+                console.log('Type:', typeof nftsValue, 'Is Array:', Array.isArray(nftsValue));
+                console.log('Full structure:', JSON.stringify(nftsValue, null, 2));
                 
                 if (Array.isArray(nftsValue)) {
-                  // Direct array of nonces
-                  availableCount = nftsValue.length;
+                  // Structure is [["nonce", "count"]] where the second element is the available count
+                  if (nftsValue.length > 0 && Array.isArray(nftsValue[0]) && nftsValue[0].length >= 2) {
+                    // The inner array has format: ["nonce", "count"]
+                    // Extract the count (second element)
+                    const countValue = nftsValue[0][1];
+                    availableCount = parseInt(countValue, 10) || 0;
+                    console.log('Case: Nested array with count, count:', availableCount, 'From value:', countValue);
+                  } else {
+                    // Fallback: count the number of nonces if structure is different
+                    const flattenArray = (arr: any[]): any[] => {
+                      return arr.reduce((acc, val) => {
+                        if (Array.isArray(val)) {
+                          return acc.concat(flattenArray(val));
+                        } else {
+                          return acc.concat(val);
+                        }
+                      }, []);
+                    };
+                    
+                    const flattened = flattenArray(nftsValue);
+                    const validNonces = flattened.filter(v => v !== null && v !== undefined && v !== '');
+                    availableCount = validNonces.length;
+                    console.log('Case: Array (flattened), count:', availableCount, 'Flattened:', flattened);
+                  }
                 } else if (typeof nftsValue === 'object' && nftsValue !== null) {
-                  // For variadic<u64> with multi_result: true, it returns an object with numeric keys
-                  // Each key represents one u64 value (nonce)
-                  // Count all numeric keys
                   const keys = Object.keys(nftsValue);
-                  console.log(`Object keys:`, keys);
+                  console.log('Object keys:', keys);
+                  console.log('First key value:', keys.length > 0 ? (nftsValue as any)[keys[0]] : 'none');
                   
-                  // Filter to only numeric keys and count them
-                  const numericKeys = keys.filter(key => !isNaN(Number(key)));
-                  availableCount = numericKeys.length;
-                  
-                  // Also check if values are arrays (nested structure)
-                  if (availableCount === 0 && keys.length > 0) {
-                    const firstValue = (nftsValue as any)[keys[0]];
-                    if (Array.isArray(firstValue)) {
-                      availableCount = firstValue.length;
-                    } else if (keys.length === 1 && Array.isArray(Object.values(nftsValue)[0])) {
-                      // Single key containing an array
-                      availableCount = (Object.values(nftsValue)[0] as any[]).length;
+                  // Check if key "0" contains an array (similar to getAllOffers structure)
+                  if (keys.length > 0 && Array.isArray((nftsValue as any)[keys[0]])) {
+                    const arrayValue = (nftsValue as any)[keys[0]];
+                    availableCount = arrayValue.length;
+                    console.log('Case: Key 0 contains array, count:', availableCount, 'Array:', arrayValue);
+                  } else if (keys.length > 0) {
+                    // Check if all keys are numeric (multi_result format where each key is one u64)
+                    const allNumeric = keys.every(key => !isNaN(Number(key)));
+                    console.log('All keys numeric?', allNumeric);
+                    
+                    if (allNumeric) {
+                      // Each numeric key represents one u64 value (nonce)
+                      availableCount = keys.length;
+                      console.log('Case: All numeric keys, count:', availableCount);
+                    } else {
+                      // Try to get all values and see what we have
+                      const allValues = Object.values(nftsValue);
+                      console.log('All values:', allValues);
+                      
+                      // Try flattening
+                      const flattened = allValues.flat();
+                      console.log('Flattened values:', flattened);
+                      
+                      // Count valid numeric values
+                      const validValues = flattened.filter(v => {
+                        if (v === null || v === undefined) return false;
+                        if (typeof v === 'number') return true;
+                        if (typeof v === 'string' && !isNaN(Number(v)) && v !== '') return true;
+                        if (v && typeof v === 'object' && 'valueOf' in v) {
+                          try {
+                            const val = (v as any).valueOf();
+                            return typeof val === 'number' || (typeof val === 'string' && !isNaN(Number(val)) && val !== '');
+                          } catch {
+                            return false;
+                          }
+                        }
+                        return false;
+                      });
+                      console.log('Valid values:', validValues);
+                      availableCount = validValues.length > 0 ? validValues.length : keys.length;
+                      console.log('Case: Mixed keys, count:', availableCount);
                     }
                   }
-                  
-                  console.log(`Numeric keys count:`, numericKeys.length, 'All keys:', keys.length);
                 }
                 
-                console.log(`Final availableCount for offer ${offer.id}:`, availableCount);
+                console.log(`=== Final availableCount for offer ${offer.id}: ${availableCount} ===`);
               }
               
               return {
@@ -233,14 +275,13 @@ export default function ShopPage() {
           })
         );
         
-        console.log('Final parsed offers with availability:', offersWithAvailability);
         // Filter out offers 1, 2, 3, and 4
         const filteredOffers = offersWithAvailability.filter(
           (offer) => !['1', '2', '3', '4'].includes(offer.id)
         );
         setOffers(filteredOffers);
       } catch (error) {
-        console.error('Error fetching offers:', error);
+        // Error fetching offers
       } finally {
         setLoading(false);
       }
@@ -295,7 +336,6 @@ export default function ShopPage() {
       // Refresh offers after purchase
       window.location.reload();
     } catch (error) {
-      console.error('Error buying NFT:', error);
       alert('Failed to purchase NFT. Please try again.');
     } finally {
       setBuyingOfferId(null);
@@ -371,7 +411,7 @@ export default function ShopPage() {
                   <h3 className='text-xl font-bold text-white mb-3'>
                     {OFFER_METADATA[offer.id]?.name || `Offer #${offer.id}`}
                   </h3>
-                  <div className='mb-4 flex items-center gap-2'>
+                  <div className='mb-2 flex items-center gap-2'>
                     <p className='text-white font-semibold text-lg'>
                       {formatPrice(offer.price, offer.token)}
                     </p>
@@ -382,6 +422,11 @@ export default function ShopPage() {
                         className='w-6 h-6'
                       />
                     )}
+                  </div>
+                  <div className='mb-4'>
+                    <p className='text-white/70 text-sm'>
+                      Available: <span className='font-semibold text-[#3EB489]'>{offer.availableCount}</span>
+                    </p>
                   </div>
                 </div>
                 <Button
