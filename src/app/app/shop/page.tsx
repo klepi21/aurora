@@ -177,12 +177,6 @@ export default function ShopPage() {
               let availableCount = 0;
               if (availableNftsResult) {
                 const nftsValue = availableNftsResult.valueOf ? availableNftsResult.valueOf() : availableNftsResult;
-                console.log(`=== Available NFTs DEBUG for offer ${offer.id} ===`);
-                console.log('Raw result:', availableNftsResult);
-                console.log('nftsValue:', nftsValue);
-                console.log('Type:', typeof nftsValue, 'Is Array:', Array.isArray(nftsValue));
-                console.log('Full structure:', JSON.stringify(nftsValue, null, 2));
-                
                 if (Array.isArray(nftsValue)) {
                   // Structure is [["nonce", "count"]] where the second element is the available count
                   if (nftsValue.length > 0 && Array.isArray(nftsValue[0]) && nftsValue[0].length >= 2) {
@@ -190,7 +184,6 @@ export default function ShopPage() {
                     // Extract the count (second element)
                     const countValue = nftsValue[0][1];
                     availableCount = parseInt(countValue, 10) || 0;
-                    console.log('Case: Nested array with count, count:', availableCount, 'From value:', countValue);
                   } else {
                     // Fallback: count the number of nonces if structure is different
                     const flattenArray = (arr: any[]): any[] => {
@@ -206,35 +199,24 @@ export default function ShopPage() {
                     const flattened = flattenArray(nftsValue);
                     const validNonces = flattened.filter(v => v !== null && v !== undefined && v !== '');
                     availableCount = validNonces.length;
-                    console.log('Case: Array (flattened), count:', availableCount, 'Flattened:', flattened);
                   }
                 } else if (typeof nftsValue === 'object' && nftsValue !== null) {
                   const keys = Object.keys(nftsValue);
-                  console.log('Object keys:', keys);
-                  console.log('First key value:', keys.length > 0 ? (nftsValue as any)[keys[0]] : 'none');
-                  
                   // Check if key "0" contains an array (similar to getAllOffers structure)
                   if (keys.length > 0 && Array.isArray((nftsValue as any)[keys[0]])) {
                     const arrayValue = (nftsValue as any)[keys[0]];
                     availableCount = arrayValue.length;
-                    console.log('Case: Key 0 contains array, count:', availableCount, 'Array:', arrayValue);
                   } else if (keys.length > 0) {
                     // Check if all keys are numeric (multi_result format where each key is one u64)
                     const allNumeric = keys.every(key => !isNaN(Number(key)));
-                    console.log('All keys numeric?', allNumeric);
-                    
                     if (allNumeric) {
                       // Each numeric key represents one u64 value (nonce)
                       availableCount = keys.length;
-                      console.log('Case: All numeric keys, count:', availableCount);
                     } else {
                       // Try to get all values and see what we have
                       const allValues = Object.values(nftsValue);
-                      console.log('All values:', allValues);
-                      
                       // Try flattening
                       const flattened = allValues.flat();
-                      console.log('Flattened values:', flattened);
                       
                       // Count valid numeric values
                       const validValues = flattened.filter(v => {
@@ -251,14 +233,11 @@ export default function ShopPage() {
                         }
                         return false;
                       });
-                      console.log('Valid values:', validValues);
                       availableCount = validValues.length > 0 ? validValues.length : keys.length;
-                      console.log('Case: Mixed keys, count:', availableCount);
                     }
                   }
                 }
                 
-                console.log(`=== Final availableCount for offer ${offer.id}: ${availableCount} ===`);
               }
               
               return {
@@ -266,7 +245,7 @@ export default function ShopPage() {
                 availableCount
               };
             } catch (error) {
-              console.error(`Error fetching available NFTs for offer ${offer.id}:`, error);
+              // Error fetching available NFTs
               return {
                 ...offer,
                 availableCount: 0
