@@ -12,6 +12,7 @@ export interface UserTeam {
   wallet_address: string;
   player_nft_identifier: string;
   position: 'GK' | 'DEF1' | 'DEF2' | 'ATT1' | 'ATT2';
+  points_at_creation?: number;
   created_at: string;
   updated_at: string;
 }

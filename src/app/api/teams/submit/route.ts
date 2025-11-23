@@ -83,11 +83,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Insert new team players
+    // 3. Get current points for each player to store as points_at_creation
+    const playerIdentifiers = players.map((p) => p.nft_identifier);
+    const { data: currentPlayers, error: playersFetchError } = await supabaseAdmin
+      .from('players')
+      .select('nft_identifier, points')
+      .in('nft_identifier', playerIdentifiers);
+
+    if (playersFetchError) {
+      console.error('Error fetching player points:', playersFetchError);
+      return NextResponse.json(
+        { error: 'Failed to fetch player points' },
+        { status: 500 }
+      );
+    }
+
+    // Create a map of player points
+    const playerPointsMap = new Map(
+      (currentPlayers || []).map((p) => [p.nft_identifier, p.points || 0])
+    );
+
+    // 4. Insert new team players with points_at_creation
     const teamRecords = players.map((player) => ({
       wallet_address,
       player_nft_identifier: player.nft_identifier,
       position: player.position,
+      points_at_creation: playerPointsMap.get(player.nft_identifier) || 0,
       created_at: now,
       updated_at: now
     }));
@@ -104,7 +125,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Calculate and update total points
+    // 5. Calculate and update total points
     await calculateAndUpdateUserPoints(wallet_address);
 
     return NextResponse.json({ success: true });
@@ -122,10 +143,10 @@ export async function POST(request: NextRequest) {
  */
 async function calculateAndUpdateUserPoints(wallet_address: string) {
   try {
-    // Get user's team players
+    // Get user's team players with their points_at_creation
     const { data: userTeam, error: teamError } = await supabaseAdmin
       .from('user_teams')
-      .select('player_nft_identifier')
+      .select('player_nft_identifier, points_at_creation')
       .eq('wallet_address', wallet_address);
 
     if (teamError || !userTeam || userTeam.length === 0) {
@@ -134,18 +155,30 @@ async function calculateAndUpdateUserPoints(wallet_address: string) {
 
     const playerIdentifiers = userTeam.map((t) => t.player_nft_identifier);
 
-    // Get points for each player
+    // Get current points for each player
     const { data: players, error: playersError } = await supabaseAdmin
       .from('players')
-      .select('points')
+      .select('nft_identifier, points')
       .in('nft_identifier', playerIdentifiers);
 
     if (playersError || !players) {
       return;
     }
 
-    // Calculate total
-    const totalPoints = players.reduce((sum, player) => sum + (player.points || 0), 0);
+    // Create a map of current player points
+    const currentPointsMap = new Map(
+      players.map((p) => [p.nft_identifier, p.points || 0])
+    );
+
+    // Calculate total: only count points gained AFTER team creation
+    // For each player: current_points - points_at_creation
+    const totalPoints = userTeam.reduce((sum, teamPlayer) => {
+      const currentPoints = currentPointsMap.get(teamPlayer.player_nft_identifier) || 0;
+      const pointsAtCreation = teamPlayer.points_at_creation || 0;
+      // Only count positive differences (points gained after team creation)
+      const pointsGained = Math.max(0, currentPoints - pointsAtCreation);
+      return sum + pointsGained;
+    }, 0);
 
     // Update user's total points
     await supabaseAdmin
