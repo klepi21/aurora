@@ -174,7 +174,11 @@ async function calculateAndUpdateUserPoints(wallet_address: string) {
     // For each player: current_points - points_at_creation
     const totalPoints = userTeam.reduce((sum, teamPlayer) => {
       const currentPoints = currentPointsMap.get(teamPlayer.player_nft_identifier) || 0;
-      const pointsAtCreation = teamPlayer.points_at_creation || 0;
+      // Handle NULL points_at_creation: if NULL, treat as 0 (points_at_creation defaults to 0)
+      // But if it's explicitly set, use that value
+      const pointsAtCreation = teamPlayer.points_at_creation !== null && teamPlayer.points_at_creation !== undefined 
+        ? teamPlayer.points_at_creation 
+        : 0;
       // Only count positive differences (points gained after team creation)
       const pointsGained = Math.max(0, currentPoints - pointsAtCreation);
       return sum + pointsGained;
