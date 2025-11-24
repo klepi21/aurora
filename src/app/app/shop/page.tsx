@@ -17,6 +17,7 @@ import { useToastContext } from '@/components/Toast';
 import nfthubAbi from '@/contracts/nfthub.abi.json';
 
 const NFT_HUB_CONTRACT = 'erd1qqqqqqqqqqqqqpgqs6q7vk3n68pdk89tzxwn7pvfplw600ypfsmsd66w6u';
+const TARGET_COLLECTION = 'AFL-6cefed';
 
 interface Offer {
   id: string;
@@ -153,7 +154,8 @@ export default function ShopPage() {
               // Convert price (BigNumber)
               const price = priceValue?.toString(10) || priceValue?.valueOf()?.toString(10) || '0';
               
-              if (id) {
+              // Only include offers from the target collection
+              if (id && collection === TARGET_COLLECTION) {
                 parsedOffers.push({
                   id,
                   creator,
