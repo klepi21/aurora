@@ -346,10 +346,15 @@ export default function ShopPage() {
     return `${priceNum.toString()} ${token}`;
   };
 
-  // Filter offers based on selected position
+  // Filter offers based on selected position (show all offers when ALL is selected)
   const filteredOffers = selectedFilter === 'ALL' 
     ? offers 
-    : offers.filter(offer => OFFER_METADATA[offer.id]?.position === selectedFilter);
+    : offers.filter(offer => {
+      // If offer has metadata, filter by position
+      // If offer doesn't have metadata, show it in ALL filter only
+      const position = OFFER_METADATA[offer.id]?.position;
+      return position === selectedFilter;
+    });
 
   return (
     <div className='flex flex-col w-full gap-6'>
