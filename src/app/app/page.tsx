@@ -353,9 +353,9 @@ export default function App() {
             </svg>
           </div>
           <div className='flex-1'>
-            <h3 className='text-white font-bold text-sm mb-1'>SEASON 1 IS STARTING SOON</h3>
+            <h3 className='text-white font-bold text-sm mb-1'>App is now on Mainnet</h3>
             <p className='text-white/90 text-xs leading-relaxed'>
-              Get ready for the first season of Aurora Football League! Build your team and compete for glory.
+              You are using real funds to create/edit team name and make transfers.
             </p>
           </div>
         </div>
