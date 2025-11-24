@@ -353,9 +353,9 @@ export default function App() {
             </svg>
           </div>
           <div className='flex-1'>
-            <h3 className='text-white font-bold text-sm mb-1'>Beta on Devnet</h3>
+            <h3 className='text-white font-bold text-sm mb-1'>SEASON 1 IS STARTING SOON</h3>
             <p className='text-white/90 text-xs leading-relaxed'>
-              This beta is running on Devnet. You will need Devnet EGLD to take part in the beta.
+              Get ready for the first season of Aurora Football League! Build your team and compete for glory.
             </p>
           </div>
         </div>
