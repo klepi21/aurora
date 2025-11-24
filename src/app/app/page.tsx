@@ -15,12 +15,11 @@ import { Button } from '@/components/Button';
 import { ACCOUNTS_ENDPOINT, GAS_PRICE } from '@/localConstants';
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
 import { useToastContext } from '@/components/Toast';
+import { getDynamicCosts } from '@/utils/egldPrice';
 import Image from 'next/image';
 
 const NFT_COLLECTION = 'FOOT-9e4e8c';
 const TEAM_NAME_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
-const TEAM_NAME_CREATE_AMOUNT = '100000000000000000'; // 0.1 EGLD
-const TEAM_NAME_EDIT_AMOUNT = '1000000000000000000'; // 1 EGLD
 
 interface NFT {
   identifier: string;
@@ -45,7 +44,35 @@ export default function App() {
   const [teamSubmitError, setTeamSubmitError] = useState<string>('');
   const [pendingTxHash, setPendingTxHash] = useState<string>('');
   const [selectedNft, setSelectedNft] = useState<NFT | null>(null);
+  const [dynamicCosts, setDynamicCosts] = useState<{
+    createTeamName: string;
+    editTeamName: string;
+    egldPrice: number;
+  } | null>(null);
   const pendingTransactions = useGetPendingTransactions();
+
+  // Fetch dynamic costs on mount
+  useEffect(() => {
+    const loadCosts = async () => {
+      try {
+        const costs = await getDynamicCosts();
+        setDynamicCosts({
+          createTeamName: costs.createTeamName,
+          editTeamName: costs.editTeamName,
+          egldPrice: costs.egldPrice
+        });
+      } catch (error) {
+        console.error('Error loading dynamic costs:', error);
+        // Set fallback values
+        setDynamicCosts({
+          createTeamName: '100000000000000000', // 0.1 EGLD fallback
+          editTeamName: '1000000000000000000', // 1 EGLD fallback
+          egldPrice: 50
+        });
+      }
+    };
+    loadCosts();
+  }, []);
 
   // Reset team name when address changes (user connects/disconnects)
   useEffect(() => {
@@ -214,9 +241,24 @@ export default function App() {
     }
   }, [pendingTransactions, pendingTxHash, teamNameInput, address, network.apiAddress, isEditingTeamName, success, showError]);
 
+  // Format EGLD amount for display (from wei to readable format, rounded to 2 decimals)
+  const formatEgldAmount = (weiAmount: string): string => {
+    const amount = BigInt(weiAmount);
+    const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
+    const wholePart = amount / divisor;
+    const fractionalPart = amount % divisor;
+    const fractionalStr = fractionalPart.toString().padStart(18, '0');
+    const decimalPart = fractionalStr.slice(0, 2);
+    return `${wholePart.toString()}.${decimalPart}`;
+  };
+
   // Calculate required amount based on create/edit mode
   const getRequiredAmount = () => {
-    return isEditingTeamName ? TEAM_NAME_EDIT_AMOUNT : TEAM_NAME_CREATE_AMOUNT;
+    if (!dynamicCosts) {
+      // Fallback to default values if costs not loaded yet
+      return isEditingTeamName ? '1000000000000000000' : '100000000000000000';
+    }
+    return isEditingTeamName ? dynamicCosts.editTeamName : dynamicCosts.createTeamName;
   };
 
   // Check if balance is sufficient
@@ -245,8 +287,8 @@ export default function App() {
 
     // Check balance before submitting
     if (!hasSufficientBalance()) {
-      const amount = isEditingTeamName ? '1 EGLD' : '0.1 EGLD';
-      setTeamSubmitError(`Insufficient balance. You need at least ${amount} to ${isEditingTeamName ? 'edit' : 'create'} your team name.`);
+      const amount = formatEgldAmount(getRequiredAmount());
+      setTeamSubmitError(`Insufficient balance. You need at least ${amount} EGLD (~$${isEditingTeamName ? '3' : '1'} USD) to ${isEditingTeamName ? 'edit' : 'create'} your team name.`);
       return;
     }
 
@@ -510,13 +552,13 @@ export default function App() {
                     {isSubmittingTeam 
                       ? (isEditingTeamName ? 'Updating...' : 'Submitting...') 
                       : isEditingTeamName 
-                        ? `Update Team (1 EGLD)` 
-                        : 'Create Team (0.1 EGLD)'}
+                        ? `Update Team (${dynamicCosts ? formatEgldAmount(dynamicCosts.editTeamName) : '~'} EGLD)` 
+                        : `Create Team (${dynamicCosts ? formatEgldAmount(dynamicCosts.createTeamName) : '~'} EGLD)`}
                   </Button>
                 </div>
-                {!hasSufficientBalance() && (
+                {!hasSufficientBalance() && dynamicCosts && (
                   <p className='text-xs text-red-400 text-center'>
-                    Insufficient balance. You need at least {isEditingTeamName ? '1 EGLD' : '0.1 EGLD'} to {isEditingTeamName ? 'edit' : 'create'} your team name.
+                    Insufficient balance. You need at least {formatEgldAmount(getRequiredAmount())} EGLD (~${isEditingTeamName ? '$3' : '$1'} USD) to {isEditingTeamName ? 'edit' : 'create'} your team name.
                   </p>
                 )}
               </div>
@@ -529,7 +571,7 @@ export default function App() {
                   onClick={handleEditTeamName}
                   disabled={!hasSufficientBalance()}
                   className='px-3 py-1 text-xs font-semibold bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all active:scale-95'
-                  title={!hasSufficientBalance() ? 'Insufficient balance (need 1 EGLD)' : 'Edit team name'}
+                  title={!hasSufficientBalance() && dynamicCosts ? `Insufficient balance (need ${formatEgldAmount(dynamicCosts.editTeamName)} EGLD)` : 'Edit team name'}
                 >
                   Edit
                 </button>

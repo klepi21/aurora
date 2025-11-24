@@ -10,12 +10,12 @@ import {
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
 import { GAS_PRICE } from '@/localConstants';
 import { useToastContext } from '@/components/Toast';
+import { getDynamicCosts } from '@/utils/egldPrice';
 import Image from 'next/image';
 import pitchImage from '../../../../public/assets/img/pitch.png';
 
 const NFT_COLLECTION = 'FOOT-9e4e8c';
 const TRANSFER_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
-const TRANSFER_COST_PER_PLAYER = '200000000000000000'; // 0.2 EGLD
 
 interface NFT {
   identifier: string;
@@ -62,6 +62,21 @@ export default function SquadsPage() {
   const [playerPoints, setPlayerPoints] = useState<Record<string, number>>({});
   const [imageLoadQueue, setImageLoadQueue] = useState<Set<string>>(new Set());
   const imageLoadRef = useRef<{ queue: string[]; processing: boolean }>({ queue: [], processing: false });
+  const [transferCostPerPlayer, setTransferCostPerPlayer] = useState<string>('200000000000000000'); // Fallback: 0.2 EGLD
+
+  // Fetch dynamic transfer cost on mount
+  useEffect(() => {
+    const loadTransferCost = async () => {
+      try {
+        const costs = await getDynamicCosts();
+        setTransferCostPerPlayer(costs.transferPerPlayer);
+      } catch (error) {
+        console.error('Error loading transfer cost:', error);
+        // Keep fallback value
+      }
+    };
+    loadTransferCost();
+  }, []);
 
   // Load team name from database
   useEffect(() => {
@@ -202,10 +217,21 @@ export default function SquadsPage() {
     return count;
   };
 
+  // Format EGLD amount for display (from wei to readable format, rounded to 2 decimals)
+  const formatEgldAmount = (weiAmount: string): string => {
+    const amount = BigInt(weiAmount);
+    const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
+    const wholePart = amount / divisor;
+    const fractionalPart = amount % divisor;
+    const fractionalStr = fractionalPart.toString().padStart(18, '0');
+    const decimalPart = fractionalStr.slice(0, 2);
+    return `${wholePart.toString()}.${decimalPart}`;
+  };
+
   // Calculate transfer cost
   const getTransferCost = () => {
     const changedCount = getChangedPlayersCount();
-    return BigInt(changedCount) * BigInt(TRANSFER_COST_PER_PLAYER);
+    return BigInt(changedCount) * BigInt(transferCostPerPlayer);
   };
 
 
@@ -867,7 +893,7 @@ export default function SquadsPage() {
                 <>
                   <span className='font-bold text-[#3EB489]'>{getChangedPlayersCount()}</span> player{getChangedPlayersCount() !== 1 ? 's' : ''} changed
                   <br />
-                  Cost: <span className='font-bold text-[#3EB489]'>{(getChangedPlayersCount() * 0.2).toFixed(1)} EGLD</span>
+                  Cost: <span className='font-bold text-[#3EB489]'>{formatEgldAmount((BigInt(getChangedPlayersCount()) * BigInt(transferCostPerPlayer)).toString())} EGLD</span>
                 </>
               ) : (
                 'No changes yet. Select players to replace.'
@@ -886,7 +912,7 @@ export default function SquadsPage() {
                 disabled={isSavingTeam || getChangedPlayersCount() === 0 || !isAllPositionsFilled()}
                 className='flex-1 px-5 py-3 text-base font-bold bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-98'
               >
-                {isSavingTeam ? 'Processing...' : `Save Transfer (${(getChangedPlayersCount() * 0.2).toFixed(1)} EGLD)`}
+                {isSavingTeam ? 'Processing...' : `Save Transfer (${formatEgldAmount((BigInt(getChangedPlayersCount()) * BigInt(transferCostPerPlayer)).toString())} EGLD)`}
               </button>
             </div>
           </div>
