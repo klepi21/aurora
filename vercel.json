@@ -1,5 +1,5 @@
 {
-  "buildCommand": "yarn build:devnet",
+  "buildCommand": "yarn build:mainnet",
   "outputDirectory": ".next",
   "framework": "nextjs"
 }

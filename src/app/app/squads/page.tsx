@@ -14,7 +14,7 @@ import Image from 'next/image';
 import pitchImage from '../../../../public/assets/img/pitch.png';
 
 const NFT_COLLECTION = 'FOOT-9e4e8c';
-const TRANSFER_RECEIVER = 'erd1u5p4njlv9rxvzvmhsxjypa69t2dran33x9ttpx0ghft7tt35wpfsxgynw4';
+const TRANSFER_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
 const TRANSFER_COST_PER_PLAYER = '200000000000000000'; // 0.2 EGLD
 
 interface NFT {
@@ -589,8 +589,8 @@ export default function SquadsPage() {
       nft.media?.[0]?.originalUrl,
       nft.url,
       // Fallback to MultiversX media API
-      nft.identifier ? `https://devnet-media.multiversx.com/nfts/thumbnail/${nft.identifier}` : null,
-      nft.identifier ? `https://devnet-api.multiversx.com/nfts/${nft.identifier}/thumbnail` : null
+      nft.identifier ? `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}` : null,
+      nft.identifier ? `https://api.multiversx.com/nfts/${nft.identifier}/thumbnail` : null
     ].filter(Boolean) as string[];
     
     return imageSources[0] || null;
@@ -629,8 +629,8 @@ export default function SquadsPage() {
         player.media?.[0]?.url,
         player.media?.[0]?.originalUrl,
         player.url,
-        `https://devnet-media.multiversx.com/nfts/thumbnail/${player.identifier}`,
-        `https://devnet-api.multiversx.com/nfts/${player.identifier}/thumbnail`
+        `https://media.multiversx.com/nfts/thumbnail/${player.identifier}`,
+        `https://api.multiversx.com/nfts/${player.identifier}/thumbnail`
       ].filter(Boolean) as string[];
 
       if (sources.length === 0) {
@@ -668,8 +668,8 @@ export default function SquadsPage() {
         player.media?.[0]?.url,
         player.media?.[0]?.originalUrl,
         player.url,
-        `https://devnet-media.multiversx.com/nfts/thumbnail/${player.identifier}`,
-        `https://devnet-api.multiversx.com/nfts/${player.identifier}/thumbnail`
+        `https://media.multiversx.com/nfts/thumbnail/${player.identifier}`,
+        `https://api.multiversx.com/nfts/${player.identifier}/thumbnail`
       ].filter(Boolean) as string[];
 
       const currentIndex = sources.indexOf(imageSrc || '');

@@ -18,7 +18,7 @@ import { useToastContext } from '@/components/Toast';
 import Image from 'next/image';
 
 const NFT_COLLECTION = 'FOOT-9e4e8c';
-const TEAM_NAME_RECEIVER = 'erd1u5p4njlv9rxvzvmhsxjypa69t2dran33x9ttpx0ghft7tt35wpfsxgynw4';
+const TEAM_NAME_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
 const TEAM_NAME_CREATE_AMOUNT = '100000000000000000'; // 0.1 EGLD
 const TEAM_NAME_EDIT_AMOUNT = '1000000000000000000'; // 1 EGLD
 

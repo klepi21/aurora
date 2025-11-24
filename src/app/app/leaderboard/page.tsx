@@ -96,7 +96,7 @@ export default function LeaderboardPage() {
       // Fetch NFTs from MultiversX API
       const nftPromises = nftIdentifiers.map(async (identifier) => {
         try {
-          const response = await fetch(`https://devnet-api.multiversx.com/nfts/${identifier}`);
+          const response = await fetch(`https://api.multiversx.com/nfts/${identifier}`);
           if (response.ok) {
             return await response.json();
           }
