@@ -16,7 +16,7 @@ import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
 import { useToastContext } from '@/components/Toast';
 import nfthubAbi from '@/contracts/nfthub.abi.json';
 
-const NFT_HUB_CONTRACT = 'erd1qqqqqqqqqqqqqpgqs6q7vk3n68pdk89tzxwn7pvfplw600ypfsmsd66w6u';
+const NFT_HUB_CONTRACT = 'erd1qqqqqqqqqqqqqpgqdvft2kan6jyu6s2wcgf7alz2ffl6yj50fsmsj9ch85';
 const TARGET_COLLECTION = 'AFL-6cefed';
 
 interface Offer {
@@ -80,11 +80,14 @@ export default function ShopPage() {
         const parsedOffers: Offer[] = [];
         
         // The result structure: Result has key '0' containing array of tuples: [{field0: Offer, field1: count}, ...]
+        console.log('Raw getAllOffers result:', allOffersResult);
+        
         if (allOffersResult) {
           let tuplesArray: any[] = [];
           
           // Get the value - it might be an object with numeric keys
           const resultValue = allOffersResult.valueOf ? allOffersResult.valueOf() : allOffersResult;
+          console.log('Result value:', resultValue);
           
           if (Array.isArray(resultValue)) {
             tuplesArray = resultValue;
@@ -154,8 +157,10 @@ export default function ShopPage() {
               // Convert price (BigNumber)
               const price = priceValue?.toString(10) || priceValue?.valueOf()?.toString(10) || '0';
               
-              // Only include offers from the target collection
-              if (id && collection === TARGET_COLLECTION) {
+              // Debug logging
+              console.log('Parsed offer:', { id, collection, token, price });
+              
+              if (id) {
                 parsedOffers.push({
                   id,
                   creator,
@@ -260,6 +265,8 @@ export default function ShopPage() {
             }
           })
         );
+        
+        console.log('Final offers with availability:', offersWithAvailability);
         
         // Show all offers
         setOffers(offersWithAvailability);
