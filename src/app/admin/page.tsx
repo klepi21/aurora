@@ -23,7 +23,7 @@ export default function AdminPage() {
   // Add player form
   const [newPlayerIdentifier, setNewPlayerIdentifier] = useState('');
   const [newPlayerName, setNewPlayerName] = useState('');
-  const [newPlayerCollection, setNewPlayerCollection] = useState('FOOT-9e4e8c');
+  const [newPlayerCollection, setNewPlayerCollection] = useState('AFL-6cefed');
   const [isAddingPlayer, setIsAddingPlayer] = useState(false);
   
   // Points management
@@ -72,7 +72,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           nft_identifier: newPlayerIdentifier.trim(),
           name: newPlayerName.trim(),
-          collection: newPlayerCollection.trim() || 'FOOT-9e4e8c',
+          collection: newPlayerCollection.trim() || 'AFL-6cefed',
         }),
       });
 
@@ -81,7 +81,7 @@ export default function AdminPage() {
       if (result.success) {
         setNewPlayerIdentifier('');
         setNewPlayerName('');
-        setNewPlayerCollection('FOOT-9e4e8c');
+        setNewPlayerCollection('AFL-6cefed');
         await fetchPlayers();
       } else {
         setError(result.error || 'Failed to add player');
@@ -248,7 +248,7 @@ export default function AdminPage() {
                     type='text'
                     value={newPlayerCollection}
                     onChange={(e) => setNewPlayerCollection(e.target.value)}
-                    placeholder='FOOT-9e4e8c'
+                    placeholder='AFL-6cefed'
                     className='w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#3EB489] transition-colors'
                   />
                 </div>

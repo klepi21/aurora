@@ -22,7 +22,7 @@ interface NFT {
   url: string;
 }
 
-const NFT_COLLECTION = 'FOOT-9e4e8c';
+const NFT_COLLECTION = 'AFL-6cefed';
 
 const getInitials = (teamName: string | null) => {
   if (!teamName) return 'UT';

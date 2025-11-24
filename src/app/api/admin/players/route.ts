@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Default collection if not provided
-    const playerCollection = collection || 'FOOT-9e4e8c';
+    const playerCollection = collection || 'AFL-6cefed';
 
     const { data, error } = await supabaseAdmin
       .from('players')

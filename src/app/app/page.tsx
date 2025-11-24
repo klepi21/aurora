@@ -18,7 +18,7 @@ import { useToastContext } from '@/components/Toast';
 import { getDynamicCosts } from '@/utils/egldPrice';
 import Image from 'next/image';
 
-const NFT_COLLECTION = 'FOOT-9e4e8c';
+const NFT_COLLECTION = 'AFL-6cefed';
 const TEAM_NAME_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
 
 interface NFT {
