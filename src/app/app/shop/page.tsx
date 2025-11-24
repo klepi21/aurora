@@ -33,7 +33,7 @@ type PlayerPosition = 'ATT' | 'DEF' | 'GK';
 // Offer metadata mapping with positions
 const OFFER_METADATA: Record<string, { name: string; image: string; position: PlayerPosition }> = {
   '1': { name: 'Lamen Yiral', image: 'https://ipfs.io/ipfs/bafybeigdjml4tanvy2yikt4fmqqtqyps2565olijyhetqak7jaa2nujoqa', position: 'ATT' },
-  '2': { name: 'JULIAN', image: 'https://ipfs.io/ipfs/bafybeidqq6c6wqc5dvpsxehf6keumvrwug7wqqdyj6wb3w56ajqdyu3q4q', position: 'ATT' },
+  '2': { name: 'Wojtek Sczensy', image: 'https://ipfs.io/ipfs/bafybeibtsmhvvlbvfvvga7ctllebzuk7xklpnc66wqoeprp5vp7neff2ue', position: 'ATT' },
   '3': { name: 'DONA', image: 'https://ipfs.io/ipfs/bafybeidkvuxvnwmilzpbuwt5aqet4nnehog5sixka7zs5txlogntx64xry', position: 'GK' },
   '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum', position: 'DEF' },
   '5': { name: 'GYOKERES', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-5cea45c3', position: 'ATT' },
