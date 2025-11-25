@@ -255,12 +255,12 @@ const docSections: DocSection[] = [
       <div className='space-y-6'>
         <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Season Format</h3>
         <p className='text-gray-300 leading-relaxed'>
-          Aurora Football League operates on a <strong className='text-white'>2-month season</strong> cycle. At the end of each season:
+          Aurora Fantasy League is structured around short, recurring seasons rather than year-long campaigns.
         </p>
         <ul className='list-disc list-inside space-y-2 text-gray-300 ml-4 mt-4'>
-          <li>🏅 Rewards are distributed to top performers</li>
-          <li>📊 Rankings are reset for the next season</li>
-          <li>🔄 Teams can make adjustments (1 player swap per season)</li>
+          <li>Each season will last approximately <strong className='text-white'>one month</strong></li>
+          <li>The exact start and end dates for each season will be announced before the season begins</li>
+          <li>This format keeps the game dynamic, allows frequent "fresh starts" and reduces long-term commitment</li>
         </ul>
 
         <div className='bg-[#3EB489]/10 border border-[#3EB489]/30 rounded-lg p-6 mt-6'>
@@ -269,14 +269,25 @@ const docSections: DocSection[] = [
           <p className='text-gray-300 text-sm mt-2'>Get ready to compete! ⚽</p>
         </div>
 
-        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Team Adjustments</h3>
+        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Leagues & Coverage</h3>
         <p className='text-gray-300 leading-relaxed'>
-          During each season, you can make <strong className='text-white'>1 player swap</strong> at a cost. This allows you to:
+          Aurora Fantasy League is built to track real-world football performance and map it to fantasy players.
+        </p>
+        <p className='text-gray-300 leading-relaxed mt-4'>
+          In the initial phase, the game will focus on players from a single league (specific league to be decided), ensuring tight control over data, UX and balancing.
+        </p>
+        <p className='text-gray-300 leading-relaxed mt-4'>
+          At launch, the ecosystem will start with <strong className='text-white'>15 fantasy player NFTs</strong>, with additional players and collections added gradually over time.
+        </p>
+
+        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Leaderboard & Winners</h3>
+        <p className='text-gray-300 leading-relaxed'>
+          Each season will have one main leaderboard:
         </p>
         <ul className='list-disc list-inside space-y-2 text-gray-300 ml-4 mt-4'>
-          <li>Replace underperforming players</li>
-          <li>Adapt to changing game conditions</li>
-          <li>Optimize your team strategy</li>
+          <li>All participating teams are ranked by total fantasy points over the season</li>
+          <li>At the end of the season, top-ranked teams receive rewards</li>
+          <li>The exact number of rewarded positions and payout structure will be announced before each season begins</li>
         </ul>
       </div>
     )
