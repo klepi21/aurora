@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { RouteNamesEnum } from '@/localConstants';
 
 interface DocSection {
   id: string;
@@ -463,6 +464,25 @@ export default function DocPage() {
               <h2 className='text-xl font-bold text-white mb-1'>📚 Aurora Football League</h2>
               <p className='text-gray-400 text-sm'>Documentation</p>
             </div>
+            
+            {/* Navigation Links */}
+            <div className='mb-6 pb-6 border-b border-gray-800/50 space-y-2'>
+              <Link
+                href={RouteNamesEnum.home}
+                className='flex items-center gap-2 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-800/50 hover:text-white transition-all text-sm'
+              >
+                <span>🏠</span>
+                Landing Page
+              </Link>
+              <Link
+                href={RouteNamesEnum.app}
+                className='flex items-center gap-2 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-800/50 hover:text-white transition-all text-sm'
+              >
+                <span>⚽</span>
+                Launch App
+              </Link>
+            </div>
+            
             <nav className='space-y-1'>
               {docSections.map((section) => (
                 <button
