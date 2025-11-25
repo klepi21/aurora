@@ -42,7 +42,12 @@ const OFFER_METADATA: Record<string, { name: string; image: string; position: Pl
   '8': { name: 'Renfar Torsen [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-2b00426e', position: 'ATT' },
   '9': { name: 'Riec Cargia [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-1fe8269e', position: 'DEF' },
   '10': { name: 'Nade Hujasin [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-7ae59bcc', position: 'DEF' },
-  '11': { name: 'Yani Soluweta [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-318e4596', position: 'ATT' }
+  '11': { name: 'Yani Soluweta [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-318e4596', position: 'ATT' },
+  '12': { name: 'Dano Vivien [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-2a68f5fe', position: 'DEF' },
+  '13': { name: 'Rigo Dubaliez [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-331a9c35', position: 'DEF' },
+  '14': { name: 'Vidak Honcar [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-cb03cfa9', position: 'DEF' },
+  '15': { name: 'Jano Blak [GK]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-7c7df17d', position: 'GK' },
+  '16': { name: 'Julen Alviroz [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-bcac6afa', position: 'ATT' }
 };
 
 export default function ShopPage() {
