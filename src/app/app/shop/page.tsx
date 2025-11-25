@@ -441,7 +441,7 @@ export default function ShopPage() {
               key={offer.id}
               className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-4 shadow-2xl border border-gray-800/50 overflow-hidden hover:border-[#3EB489]/50 transition-all'
             >
-              <div className='flex items-center gap-4'>
+              <div className='flex items-start gap-4'>
                 {/* NFT Image */}
                 <div className='w-20 h-20 flex-shrink-0 bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50'>
                   {OFFER_METADATA[offer.id]?.image ? (
@@ -468,7 +468,7 @@ export default function ShopPage() {
                 
                 {/* Name, Price and Availability */}
                 <div className='flex-1 min-w-0 flex flex-col items-start'>
-                  <h3 className='text-xs font-bold text-white truncate w-full mb-1'>
+                  <h3 className='text-xs font-bold text-white break-words w-full mb-1'>
                     {OFFER_METADATA[offer.id]?.name || `Offer #${offer.id}`}
                   </h3>
                   <div className='flex items-center gap-2'>
