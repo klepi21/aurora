@@ -430,15 +430,15 @@ export default function ShopPage() {
           <p className='text-white/50 text-sm'>Check back later for new player listings</p>
         </div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div className='flex flex-col gap-4'>
           {filteredOffers.map((offer) => (
             <div
               key={offer.id}
-              className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden hover:border-[#3EB489]/50 transition-all'
+              className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-4 shadow-2xl border border-gray-800/50 overflow-hidden hover:border-[#3EB489]/50 transition-all'
             >
-              <div className='flex flex-col gap-4'>
+              <div className='flex items-center gap-4'>
                 {/* NFT Image */}
-                <div className='w-full aspect-square bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50'>
+                <div className='w-20 h-20 flex-shrink-0 bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/50'>
                   {OFFER_METADATA[offer.id]?.image ? (
                     <img
                       src={OFFER_METADATA[offer.id].image}
@@ -450,50 +450,53 @@ export default function ShopPage() {
                         target.style.display = 'none';
                         const parent = target.parentElement;
                         if (parent) {
-                          parent.innerHTML = '<div class="text-white/30 text-4xl flex items-center justify-center w-full h-full">🖼️</div>';
+                          parent.innerHTML = '<div class="text-white/30 text-2xl flex items-center justify-center w-full h-full">🖼️</div>';
                         }
                       }}
                     />
                   ) : (
                     <div className='w-full h-full flex items-center justify-center'>
-                      <div className='text-white/30 text-4xl'>🖼️</div>
+                      <div className='text-white/30 text-2xl'>🖼️</div>
                     </div>
                   )}
                 </div>
                 
-                <div>
-                  <h3 className='text-xl font-bold text-white mb-3'>
+                {/* Name, Price and Availability */}
+                <div className='flex-1 min-w-0 flex flex-col items-start'>
+                  <h3 className='text-xs font-bold text-white truncate w-full mb-1'>
                     {OFFER_METADATA[offer.id]?.name || `Offer #${offer.id}`}
                   </h3>
-                  <div className='mb-2 flex items-center gap-2'>
-                    <p className='text-white font-semibold text-lg'>
+                  <div className='flex items-center gap-2'>
+                    <p className='text-white font-semibold text-lg whitespace-nowrap'>
                       {formatPrice(offer.price, offer.token)}
                     </p>
                     {(offer.token === 'EGLD' || !offer.token) && (
                       <img
                         src='https://s2.coinmarketcap.com/static/img/coins/200x200/6892.png'
                         alt='EGLD'
-                        className='w-6 h-6'
+                        className='w-6 h-6 flex-shrink-0'
                       />
                     )}
                   </div>
-                  <div className='mb-4'>
-                    <p className='text-white/70 text-sm'>
-                      Available: <span className='font-semibold text-[#3EB489]'>{offer.availableCount}</span>
-                    </p>
-                  </div>
+                  <p className='text-white/70 text-xs whitespace-nowrap mt-1'>
+                    Available: <span className='font-semibold text-[#3EB489]'>{offer.availableCount}</span>
+                  </p>
                 </div>
-                <Button
-                  onClick={() => handleBuyNft(offer.id)}
-                  disabled={buyingOfferId === offer.id || offer.availableCount === 0}
-                  className='w-full px-6 py-3 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-gray-900 font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'
-                >
-                  {buyingOfferId === offer.id 
-                    ? 'Processing...' 
-                    : offer.availableCount === 0 
-                    ? 'Sold Out' 
-                    : 'BUY PLAYER'}
-                </Button>
+                
+                {/* Buy Button */}
+                <div className='flex-shrink-0'>
+                  <Button
+                    onClick={() => handleBuyNft(offer.id)}
+                    disabled={buyingOfferId === offer.id || offer.availableCount === 0}
+                    className='px-4 py-1.5 text-sm bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-gray-900 font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap'
+                  >
+                    {buyingOfferId === offer.id 
+                      ? 'Processing...' 
+                      : offer.availableCount === 0 
+                      ? 'Sold Out' 
+                      : 'BUY PLAYER'}
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
