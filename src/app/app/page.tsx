@@ -376,32 +376,6 @@ export default function App() {
 
   return (
     <div className='flex flex-col w-full gap-5'>
-      {/* Beta Warning Alert */}
-      <div className='bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-2xl p-4 shadow-lg'>
-        <div className='flex items-start gap-3'>
-          <div className='flex-shrink-0 mt-0.5'>
-            <svg
-              className='w-6 h-6 text-yellow-400'
-              fill='none'
-              viewBox='0 0 24 24'
-              strokeWidth={2}
-              stroke='currentColor'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'
-              />
-            </svg>
-          </div>
-          <div className='flex-1'>
-            <h3 className='text-white font-bold text-sm mb-1'>App is now on Mainnet</h3>
-            <p className='text-white/90 text-xs leading-relaxed'>
-              You are using real funds to create/edit team name and make transfers.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Aurora Image Box */}
       <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-2xl shadow-xl border border-gray-800/50 backdrop-blur-sm overflow-hidden'>
@@ -415,7 +389,7 @@ export default function App() {
           {/* Text Overlay */}
           <div className='absolute left-0 top-0 h-full flex flex-col justify-center pl-6 z-10'>
             <p className='text-2xl font-bold text-white mb-1'>AFL Season 1</p>
-            <p className='text-sm font-semibold text-[#3EB489]'>Coming Soon</p>
+            <p className='text-sm font-semibold text-[#3EB489]'>29/11 to 4/1 2026</p>
           </div>
         </div>
       </div>
