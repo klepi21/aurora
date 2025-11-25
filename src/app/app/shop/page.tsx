@@ -34,14 +34,15 @@ type PlayerPosition = 'ATT' | 'DEF' | 'GK';
 const OFFER_METADATA: Record<string, { name: string; image: string; position: PlayerPosition }> = {
   '1': { name: 'Lamen Yiral [ATT]', image: 'https://ipfs.io/ipfs/bafybeigdjml4tanvy2yikt4fmqqtqyps2565olijyhetqak7jaa2nujoqa', position: 'ATT' },
   '2': { name: 'Wojtek Sczensy [GK]', image: 'https://ipfs.io/ipfs/bafybeibtsmhvvlbvfvvga7ctllebzuk7xklpnc66wqoeprp5vp7neff2ue', position: 'GK' },
-  '3': { name: 'DONA', image: 'https://ipfs.io/ipfs/bafybeidkvuxvnwmilzpbuwt5aqet4nnehog5sixka7zs5txlogntx64xry', position: 'GK' },
-  '4': { name: 'RICHARLI', image: 'https://ipfs.io/ipfs/bafybeifgy7w4luk774wasc6qadcmmtsieemsem5umr27aq25ljydmyuhum', position: 'DEF' },
-  '5': { name: 'GYOKERES', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-5cea45c3', position: 'ATT' },
-  '6': { name: 'KYLIAN', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a5abf52a', position: 'ATT' },
-  '7': { name: 'LEAO', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-a750a842', position: 'ATT' },
-  '8': { name: 'DONARU', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-8678d8de', position: 'GK' },
-  '9': { name: 'BASTONI', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-4d269c48', position: 'DEF' },
-  '10': { name: 'ARAUJO', image: 'https://media.multiversx.com/nfts/thumbnail/FOOT-9e4e8c-2fa7b9ed', position: 'DEF' }
+  '3': { name: 'Thibau Cortais [GK]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-2f5b9dbc', position: 'GK' },
+  '4': { name: 'Arfa Miran [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-a6e60358', position: 'DEF' },
+  '5': { name: 'Unar Simo [GK]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-8a4a2031', position: 'GK' },
+  '6': { name: 'Goran Gurteza [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-9a300c66', position: 'ATT' },
+  '7': { name: 'Kylian Bampek [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-c0a74e42', position: 'ATT' },
+  '8': { name: 'Renfar Torsen [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-2b00426e', position: 'ATT' },
+  '9': { name: 'Riec Cargia [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-1fe8269e', position: 'DEF' },
+  '10': { name: 'Nade Hujasin [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-7ae59bcc', position: 'DEF' },
+  '11': { name: 'Yani Soluweta [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-318e4596', position: 'ATT' }
 };
 
 export default function ShopPage() {
