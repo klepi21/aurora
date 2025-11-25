@@ -13,20 +13,50 @@ interface DocSection {
 const docSections: DocSection[] = [
   {
     id: 'introduction',
-    title: 'Introduction',
-    emoji: '⚽',
+    title: 'Executive Summary',
+    emoji: '📋',
     content: (
       <div className='space-y-4'>
         <p className='text-lg text-gray-300 leading-relaxed'>
-          Welcome to <span className='font-bold text-[#3EB489]'>Aurora Football League</span>, the premier fantasy football NFT game on the MultiversX blockchain! 🏆
+          <span className='font-bold text-[#3EB489]'>Aurora Fantasy League</span> is an on-chain fantasy football manager where players collect and manage NFT-based fantasy player cards, compete in monthly seasons, and climb leaderboards driven by real-world match data.
         </p>
         <p className='text-gray-300 leading-relaxed'>
-          Aurora Football League combines the excitement of fantasy football with the power of blockchain technology, allowing you to own, trade, and compete with unique NFT player cards.
+          By combining accessible gameplay with verifiable on-chain ownership, Aurora Fantasy League targets both traditional football fans and crypto-native users, offering a low-friction way to play, enjoy, and earn with your favourite players — through fantasy cards that mirror the performance of real-world football.
         </p>
-        <div className='bg-[#3EB489]/10 border border-[#3EB489]/30 rounded-lg p-4 mt-6'>
-          <p className='text-[#3EB489] font-semibold mb-2'>🎯 Quick Start</p>
+        <p className='text-gray-300 leading-relaxed'>
+          At launch, players will build compact squads of 5 fantasy players (1 GK, 2 DEF, 2 FWD) and join short monthly seasons. In the long term, Aurora Fantasy League plans to support full 11-a-side squads and run special, time-limited mega-tournaments that mirror major international competitions such as the summer World Cup.
+        </p>
+      </div>
+    )
+  },
+  {
+    id: 'vision',
+    title: 'Vision & Core Principles',
+    emoji: '🎯',
+    content: (
+      <div className='space-y-6'>
+        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Vision</h3>
+        <p className='text-gray-300 leading-relaxed'>
+          Become the most accessible on-chain fantasy football manager, where you can draft a small team, compete in short monthly seasons, and truly own your favourite players as NFTs – through fantasy cards that transparently track real-world football performance.
+        </p>
+
+        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Target Audience</h3>
+        <p className='text-gray-300 leading-relaxed mb-4'>
+          Aurora Fantasy League is designed for a hybrid audience:
+        </p>
+        <ul className='list-disc list-inside space-y-2 text-gray-300 ml-4'>
+          <li><strong className='text-white'>Football fans</strong> who want a simple, fast-paced fantasy experience without complex squad management or season-long grind.</li>
+          <li><strong className='text-white'>Crypto-native users</strong> who value on-chain ownership, NFT trading, and open economies.</li>
+        </ul>
+        <p className='text-gray-300 leading-relaxed mt-4'>
+          The long-term goal is to bridge these two worlds: make it easy for football fans to enter web3, while still giving crypto users a deep, tradable NFT ecosystem.
+        </p>
+
+        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Core Promise</h3>
+        <div className='bg-[#3EB489]/10 border border-[#3EB489]/30 rounded-lg p-6 mt-4'>
+          <p className='text-[#3EB489] font-bold text-xl mb-2'>Play, enjoy and earn with your favourite players.</p>
           <p className='text-gray-300 text-sm'>
-            Build your team of 5 players (1 GK, 2 DEF, 2 ATT), compete in seasons, and earn rewards!
+            Players build compact squads using NFT fantasy player cards, join monthly seasons, and compete on transparent, on-chain leaderboards that are backed by official football performance data.
           </p>
         </div>
       </div>
@@ -38,37 +68,48 @@ const docSections: DocSection[] = [
     emoji: '🎮',
     content: (
       <div className='space-y-6'>
-        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Core Gameplay</h3>
         <p className='text-gray-300 leading-relaxed'>
-          Aurora Football League is a fantasy football game where players build teams using NFT player cards. Each team consists of:
+          Aurora Fantasy League is an on-chain fantasy football manager with three core pillars:
         </p>
-        <ul className='list-disc list-inside space-y-2 text-gray-300 ml-4'>
-          <li><strong className='text-white'>1 Goalkeeper (GK)</strong> 🥅</li>
-          <li><strong className='text-white'>2 Defenders (DEF)</strong> 🛡️</li>
-          <li><strong className='text-white'>2 Attackers (ATT)</strong> ⚽</li>
-        </ul>
-        <p className='text-gray-300 leading-relaxed mt-4'>
-          <strong className='text-white'>Total: 5 players per team</strong>
-        </p>
-
-        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Player Pool</h3>
-        <div className='grid md:grid-cols-3 gap-4 mt-4'>
-          <div className='bg-gray-800/50 rounded-lg p-4 border border-gray-700/50'>
-            <p className='text-2xl mb-2'>🥅</p>
-            <p className='text-white font-semibold'>Goalkeepers</p>
-            <p className='text-gray-400 text-sm mt-1'>Limited supply</p>
+        <div className='space-y-4 mt-6'>
+          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
+            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
+              🎴 Fantasy Player NFTs
+            </h4>
+            <p className='text-gray-300 text-sm'>
+              Every player in your squad is an NFT card that you own, trade and use in competitive seasons.
+            </p>
           </div>
-          <div className='bg-gray-800/50 rounded-lg p-4 border border-gray-700/50'>
-            <p className='text-2xl mb-2'>🛡️</p>
-            <p className='text-white font-semibold'>Defenders</p>
-            <p className='text-gray-400 text-sm mt-1'>Strategic choices</p>
+          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
+            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
+              📅 Monthly Seasons
+            </h4>
+            <p className='text-gray-300 text-sm'>
+              Short, recurring seasons (approximately one month each), with clear start/end dates and a single main leaderboard.
+            </p>
           </div>
-          <div className='bg-gray-800/50 rounded-lg p-4 border border-gray-700/50'>
-            <p className='text-2xl mb-2'>⚽</p>
-            <p className='text-white font-semibold'>Attackers</p>
-            <p className='text-gray-400 text-sm mt-1'>High scoring potential</p>
+          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
+            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
+              ⚽ Real-World Data
+            </h4>
+            <p className='text-gray-300 text-sm'>
+              Fantasy scoring is driven by official football match data mapped onto fantasy players, using a fixed, public scoring system.
+            </p>
           </div>
         </div>
+
+        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Squad Structure</h3>
+        <p className='text-gray-300 leading-relaxed'>
+          At launch, squads will consist of 5 players:
+        </p>
+        <ul className='list-disc list-inside space-y-2 text-gray-300 ml-4 mt-4'>
+          <li><strong className='text-white'>1 Goalkeeper (GK)</strong> 🥅</li>
+          <li><strong className='text-white'>2 Defenders (DEF)</strong> 🛡️</li>
+          <li><strong className='text-white'>2 Forwards (FWD)</strong> ⚽</li>
+        </ul>
+        <p className='text-gray-300 leading-relaxed mt-4'>
+          Over time, Aurora Fantasy League aims to expand this structure to full 11-a-side squads, enabling deeper tactics and special tournament formats that mirror real-world football.
+        </p>
       </div>
     )
   },
@@ -110,11 +151,11 @@ const docSections: DocSection[] = [
               </div>
               <div className='flex justify-between'>
                 <span className='text-gray-400'>Clean Sheet</span>
-                <span className='text-[#3EB489] font-semibold'>+3</span>
+                <span className='text-[#3EB489] font-semibold'>+2</span>
               </div>
               <div className='flex justify-between'>
                 <span className='text-gray-400'>Penalty Save</span>
-                <span className='text-[#3EB489] font-semibold'>+2</span>
+                <span className='text-[#3EB489] font-semibold'>+3</span>
               </div>
               <div className='flex justify-between'>
                 <span className='text-gray-400'>Win + Clean Sheet</span>
@@ -265,82 +306,6 @@ const docSections: DocSection[] = [
             <p className='text-3xl mb-2'>🏅</p>
             <p className='text-white font-bold text-lg'>Leaderboard Tiers</p>
             <p className='text-gray-300 text-sm mt-2'>Bronze, Silver, Gold, Champion</p>
-          </div>
-        </div>
-
-        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Leaderboard Rankings</h3>
-        <div className='space-y-3'>
-          <div className='flex items-center gap-3 bg-gray-800/50 rounded-lg p-4 border border-gray-700/50'>
-            <span className='text-2xl'>🥇</span>
-            <div>
-              <p className='text-white font-semibold'>Champion Tier</p>
-              <p className='text-gray-400 text-sm'>Top performers receive the highest rewards</p>
-            </div>
-          </div>
-          <div className='flex items-center gap-3 bg-gray-800/50 rounded-lg p-4 border border-gray-700/50'>
-            <span className='text-2xl'>🥈</span>
-            <div>
-              <p className='text-white font-semibold'>Gold Tier</p>
-              <p className='text-gray-400 text-sm'>Excellent rewards for top players</p>
-            </div>
-          </div>
-          <div className='flex items-center gap-3 bg-gray-800/50 rounded-lg p-4 border border-gray-700/50'>
-            <span className='text-2xl'>🥉</span>
-            <div>
-              <p className='text-white font-semibold'>Silver & Bronze</p>
-              <p className='text-gray-400 text-sm'>Rewards for consistent performers</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  },
-  {
-    id: 'nft-utility',
-    title: 'NFT Utility',
-    emoji: '🎴',
-    content: (
-      <div className='space-y-6'>
-        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>NFT Features</h3>
-        <p className='text-gray-300 leading-relaxed'>
-          Your NFT player cards are more than just collectibles. They offer:
-        </p>
-
-        <div className='space-y-4 mt-6'>
-          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
-            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
-              ⭐ Rarity System
-            </h4>
-            <p className='text-gray-300 text-sm'>
-              Cards come in different rarities: Common, Rare, Epic, and Legendary. Higher rarity means better stats and multipliers!
-            </p>
-          </div>
-
-          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
-            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
-              📈 Stat Multipliers
-            </h4>
-            <p className='text-gray-300 text-sm'>
-              Rare cards can have stat multipliers (e.g., +5% points), giving you an edge in competitions.
-            </p>
-          </div>
-
-          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
-            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
-              🔄 Seasonal Upgrades
-            </h4>
-            <p className='text-gray-300 text-sm'>
-              Upgrade your NFTs between seasons to improve their performance and value.
-            </p>
-          </div>
-
-          <div className='bg-gray-800/50 rounded-lg p-5 border border-gray-700/50'>
-            <h4 className='text-lg font-bold text-white mb-2 flex items-center gap-2'>
-              💎 Limited Supply
-            </h4>
-            <p className='text-gray-300 text-sm'>
-              Limited NFT supply maintains rarity and value. Own unique players that others can't get!
-            </p>
           </div>
         </div>
       </div>
