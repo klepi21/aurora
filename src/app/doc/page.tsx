@@ -298,26 +298,22 @@ const docSections: DocSection[] = [
     emoji: '💰',
     content: (
       <div className='space-y-6'>
-        <h3 className='text-2xl font-bold text-white mt-8 mb-4'>Prize Pool</h3>
         <p className='text-gray-300 leading-relaxed'>
-          Compete for amazing rewards! Top performers receive:
+          Aurora Fantasy League is built as a competitive game where skill, strategy and football knowledge are rewarded.
         </p>
-        <div className='grid md:grid-cols-3 gap-4 mt-6'>
-          <div className='bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 rounded-lg p-6 border border-yellow-500/30'>
-            <p className='text-3xl mb-2'>💵</p>
-            <p className='text-white font-bold text-lg'>USDC Payouts</p>
-            <p className='text-gray-300 text-sm mt-2'>Real money prizes</p>
-          </div>
-          <div className='bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg p-6 border border-purple-500/30'>
-            <p className='text-3xl mb-2'>🎴</p>
-            <p className='text-white font-bold text-lg'>Rare NFTs</p>
-            <p className='text-gray-300 text-sm mt-2'>Exclusive player cards</p>
-          </div>
-          <div className='bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg p-6 border border-blue-500/30'>
-            <p className='text-3xl mb-2'>🏅</p>
-            <p className='text-white font-bold text-lg'>Leaderboard Tiers</p>
-            <p className='text-gray-300 text-sm mt-2'>Bronze, Silver, Gold, Champion</p>
-          </div>
+        <p className='text-gray-300 leading-relaxed mt-4'>
+          Seasonal rewards will be distributed on-chain in the form of tokens and/or stablecoins supported by the underlying blockchain ecosystem.
+        </p>
+        <p className='text-gray-300 leading-relaxed mt-4'>
+          The exact reward pools, payout curves, and token types for each season will be announced before that season begins.
+        </p>
+        <div className='bg-[#3EB489]/10 border border-[#3EB489]/30 rounded-lg p-6 mt-6'>
+          <p className='text-[#3EB489] font-semibold mb-2'>🎯 Reward Goals</p>
+          <ul className='space-y-2 text-gray-300 text-sm'>
+            <li>• Incentivize skilled play and active participation</li>
+            <li>• Support an active trading ecosystem around fantasy player NFTs</li>
+            <li>• Align long-term player engagement with the health of the overall platform</li>
+          </ul>
         </div>
       </div>
     )
