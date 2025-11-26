@@ -363,6 +363,23 @@ export default function ShopPage() {
     return `${priceNum.toString()} ${token}`;
   };
 
+  // Convert EGLD price to USD
+  const getUsdPrice = (egldPriceWei: string): string => {
+    try {
+      const priceNum = BigInt(egldPriceWei);
+      const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
+      const wholePart = priceNum / divisor;
+      const fractionalPart = priceNum % divisor;
+      const fractionalStr = fractionalPart.toString().padStart(18, '0');
+      const decimalPart = fractionalStr.slice(0, 4).replace(/0+$/, '') || '0';
+      const egldAmount = parseFloat(`${wholePart.toString()}.${decimalPart}`);
+      const usdAmount = egldAmount * egldPrice;
+      return usdAmount.toFixed(2);
+    } catch {
+      return '0.00';
+    }
+  };
+
   // Filter offers based on selected position (show all offers when ALL is selected)
   const filteredOffers = selectedFilter === 'ALL' 
     ? offers 
