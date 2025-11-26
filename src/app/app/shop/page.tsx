@@ -368,11 +368,9 @@ export default function ShopPage() {
     try {
       const priceNum = BigInt(egldPriceWei);
       const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
-      const wholePart = priceNum / divisor;
-      const fractionalPart = priceNum % divisor;
-      const fractionalStr = fractionalPart.toString().padStart(18, '0');
-      const decimalPart = fractionalStr.slice(0, 4).replace(/0+$/, '') || '0';
-      const egldAmount = parseFloat(`${wholePart.toString()}.${decimalPart}`);
+      const wholePart = Number(priceNum / divisor);
+      const fractionalPart = Number(priceNum % divisor);
+      const egldAmount = wholePart + (fractionalPart / Number(divisor));
       const usdAmount = egldAmount * egldPrice;
       return usdAmount.toFixed(2);
     } catch {
