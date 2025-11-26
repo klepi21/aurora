@@ -10,12 +10,15 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
   return (
     <ToastProvider>
-      <div className='flex items-center justify-center min-h-screen bg-gradient-to-b from-[#0A3124] to-black py-0 px-0 md:py-4 md:px-4'>
+      <div className='flex items-center justify-center min-h-screen bg-gradient-to-b from-[#0A3124] to-black py-0 px-0 md:py-4 md:px-4 safe-area-inset'>
         <div className='flex flex-col w-full h-screen md:max-w-[428px] md:min-h-[calc(100vh-2rem)] md:h-auto bg-white md:rounded-[2rem] md:shadow-2xl overflow-hidden relative'>
           <AppTopNavbar />
-          <main className='flex-1 pb-20 pt-4 px-4 overflow-y-auto bg-gradient-to-b from-[#0A3124]/95 to-black'>
+          <main className='flex-1 pb-28 md:pb-20 pt-4 px-4 overflow-y-auto overscroll-contain bg-gradient-to-b from-[#0A3124]/95 to-black' style={{ 
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: 'calc(6rem + env(safe-area-inset-bottom))'
+          }}>
             {!isLoggedIn ? (
-              <div className='flex flex-col items-center justify-center h-full min-h-[400px] gap-6 px-4'>
+              <div className='flex flex-col items-center justify-center min-h-[calc(100vh-200px)] gap-6 px-4 py-8'>
                 {/* Image */}
                 <div className='relative w-full max-w-[200px] aspect-square mb-4'>
                   <img

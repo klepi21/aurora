@@ -101,7 +101,7 @@ export const BottomNavigation = () => {
   };
 
   return (
-    <nav className='absolute bottom-0 left-0 right-0 bg-gradient-to-br from-gray-900/95 to-black rounded-t-[2rem] shadow-2xl z-50 border-t border-gray-800/50'>
+    <nav className='absolute bottom-0 left-0 right-0 bg-gradient-to-br from-gray-900/95 to-black rounded-t-[2rem] shadow-2xl z-50 border-t border-gray-800/50 pb-safe' style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
       <div className='flex items-center justify-around py-4 px-2'>
         {navItems.map((item) => {
           const isActive =
