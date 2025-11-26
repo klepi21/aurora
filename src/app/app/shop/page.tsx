@@ -385,10 +385,18 @@ export default function ShopPage() {
       const priceNum = BigInt(egldPriceWei);
       const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
       
-      // Convert wei to EGLD (with proper decimal handling)
-      const wholePart = Number(priceNum / divisor);
-      const fractionalPart = Number(priceNum % divisor);
-      const egldAmount = wholePart + (fractionalPart / 1000000000000000000);
+      // Convert wei to EGLD using string manipulation to avoid precision loss
+      const wholePart = priceNum / divisor;
+      const fractionalPart = priceNum % divisor;
+      
+      // Convert fractional part to decimal string
+      const fractionalStr = fractionalPart.toString().padStart(18, '0');
+      // Take first 4 decimal places and remove trailing zeros
+      const decimalPart = fractionalStr.slice(0, 4).replace(/0+$/, '') || '0';
+      
+      // Combine whole and decimal parts
+      const egldAmountStr = `${wholePart.toString()}.${decimalPart}`;
+      const egldAmount = parseFloat(egldAmountStr);
       
       // Multiply by current EGLD price in USD
       const usdAmount = egldAmount * egldPrice;
