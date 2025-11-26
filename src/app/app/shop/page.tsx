@@ -14,6 +14,7 @@ import { BigUIntValue, AddressValue } from '@multiversx/sdk-core';
 import { Button } from '@/components/Button';
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
 import { useToastContext } from '@/components/Toast';
+import { fetchEGLDPrice } from '@/utils/egldPrice';
 import nfthubAbi from '@/contracts/nfthub.abi.json';
 
 const NFT_HUB_CONTRACT = 'erd1qqqqqqqqqqqqqpgqdvft2kan6jyu6s2wcgf7alz2ffl6yj50fsmsj9ch85';
@@ -58,6 +59,7 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [buyingOfferId, setBuyingOfferId] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<PlayerPosition | 'ALL'>('ALL');
+  const [egldPrice, setEgldPrice] = useState<number>(50); // Default fallback price
 
   // Fetch all offers from contract
   useEffect(() => {
@@ -471,16 +473,21 @@ export default function ShopPage() {
                   <h3 className='text-xs font-bold text-white break-words w-full mb-1'>
                     {OFFER_METADATA[offer.id]?.name || `Offer #${offer.id}`}
                   </h3>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 flex-wrap'>
                     <p className='text-white font-semibold text-lg whitespace-nowrap'>
                       {formatPrice(offer.price, offer.token)}
                     </p>
                     {(offer.token === 'EGLD' || !offer.token) && (
-                      <img
-                        src='https://s2.coinmarketcap.com/static/img/coins/200x200/6892.png'
-                        alt='EGLD'
-                        className='w-6 h-6 flex-shrink-0'
-                      />
+                      <>
+                        <img
+                          src='https://s2.coinmarketcap.com/static/img/coins/200x200/6892.png'
+                          alt='EGLD'
+                          className='w-6 h-6 flex-shrink-0'
+                        />
+                        <span className='text-white/70 text-sm whitespace-nowrap'>
+                          (${getUsdPrice(offer.price)})
+                        </span>
+                      </>
                     )}
                   </div>
                   <p className='text-white/70 text-xs whitespace-nowrap mt-1'>
