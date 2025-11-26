@@ -61,6 +61,20 @@ export default function ShopPage() {
   const [selectedFilter, setSelectedFilter] = useState<PlayerPosition | 'ALL'>('ALL');
   const [egldPrice, setEgldPrice] = useState<number>(50); // Default fallback price
 
+  // Fetch EGLD price
+  useEffect(() => {
+    const loadPrice = async () => {
+      try {
+        const price = await fetchEGLDPrice();
+        setEgldPrice(price);
+      } catch (error) {
+        console.error('Failed to fetch EGLD price:', error);
+        // Keep default fallback price
+      }
+    };
+    loadPrice();
+  }, []);
+
   // Fetch all offers from contract
   useEffect(() => {
     const fetchOffers = async () => {
@@ -366,15 +380,22 @@ export default function ShopPage() {
   // Convert EGLD price to USD
   const getUsdPrice = (egldPriceWei: string): string => {
     try {
+      if (!egldPriceWei || egldPrice === 0) return 'N/A';
+      
       const priceNum = BigInt(egldPriceWei);
       const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
+      
+      // Convert wei to EGLD (with proper decimal handling)
       const wholePart = Number(priceNum / divisor);
       const fractionalPart = Number(priceNum % divisor);
-      const egldAmount = wholePart + (fractionalPart / Number(divisor));
+      const egldAmount = wholePart + (fractionalPart / 1000000000000000000);
+      
+      // Multiply by current EGLD price in USD
       const usdAmount = egldAmount * egldPrice;
       return usdAmount.toFixed(2);
-    } catch {
-      return '0.00';
+    } catch (error) {
+      console.error('Error calculating USD price:', error);
+      return 'N/A';
     }
   };
 
