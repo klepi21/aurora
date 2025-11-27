@@ -58,9 +58,92 @@ export default function SquadsPage() {
   const pendingTransactions = useGetPendingTransactions();
   const pitchRef = useRef<HTMLDivElement>(null);
   const [playerPoints, setPlayerPoints] = useState<Record<string, number>>({});
-  const [imageLoadQueue, setImageLoadQueue] = useState<Set<string>>(new Set());
-  const imageLoadRef = useRef<{ queue: string[]; processing: boolean }>({ queue: [], processing: false });
   const [transferCostPerPlayer, setTransferCostPerPlayer] = useState<string>('200000000000000000'); // Fallback: 0.2 EGLD
+  const [countdown, setCountdown] = useState<string>('');
+
+  // Calculate countdown to next substitute window
+  useEffect(() => {
+    const calculateCountdown = () => {
+      const now = new Date();
+      const utcDay = now.getUTCDay();
+      const utcHour = now.getUTCHours();
+      const utcMinute = now.getUTCMinutes();
+      const utcSecond = now.getUTCSeconds();
+
+      let nextWindow: Date;
+
+      // If it's Tuesday or Friday but before 9 AM UTC, next window is today at 9 AM
+      if ((utcDay === 2 || utcDay === 5) && utcHour < 9) {
+        nextWindow = new Date(now);
+        nextWindow.setUTCHours(9, 0, 0, 0);
+      }
+      // If it's Tuesday or Friday but after 3 PM UTC, calculate next window
+      else if ((utcDay === 2 || utcDay === 5) && utcHour >= 15) {
+        // If Tuesday, next is Friday
+        if (utcDay === 2) {
+          const daysUntilFriday = 3;
+          nextWindow = new Date(now);
+          nextWindow.setUTCDate(now.getUTCDate() + daysUntilFriday);
+          nextWindow.setUTCHours(9, 0, 0, 0);
+        } else {
+          // If Friday, next is Tuesday (4 days)
+          const daysUntilTuesday = 4;
+          nextWindow = new Date(now);
+          nextWindow.setUTCDate(now.getUTCDate() + daysUntilTuesday);
+          nextWindow.setUTCHours(9, 0, 0, 0);
+        }
+      }
+      // Otherwise, calculate next Tuesday or Friday (whichever is sooner)
+      else {
+        const nextTuesday = new Date(now);
+        const daysUntilTuesday = (2 - utcDay + 7) % 7 || 7;
+        nextTuesday.setUTCDate(now.getUTCDate() + daysUntilTuesday);
+        nextTuesday.setUTCHours(9, 0, 0, 0);
+
+        const nextFriday = new Date(now);
+        const daysUntilFriday = (5 - utcDay + 7) % 7 || 7;
+        nextFriday.setUTCDate(now.getUTCDate() + daysUntilFriday);
+        nextFriday.setUTCHours(9, 0, 0, 0);
+
+        nextWindow = nextTuesday < nextFriday ? nextTuesday : nextFriday;
+      }
+
+      // Calculate time difference
+      const diff = nextWindow.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setCountdown('Substitutes are now open!');
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      let countdownStr = '';
+      if (days > 0) {
+        countdownStr += `${days}d `;
+      }
+      if (hours > 0 || days > 0) {
+        countdownStr += `${hours}h `;
+      }
+      if (minutes > 0 || hours > 0 || days > 0) {
+        countdownStr += `${minutes}m `;
+      }
+      countdownStr += `${seconds}s`;
+
+      setCountdown(countdownStr.trim());
+    };
+
+    // Calculate immediately
+    calculateCountdown();
+
+    // Update every second
+    const interval = setInterval(calculateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch dynamic transfer cost on mount
   useEffect(() => {
@@ -585,19 +668,13 @@ export default function SquadsPage() {
   };
 
   const getPlayerImage = (nft: NFT | null) => {
-    if (!nft) return null;
+    if (!nft || !nft.identifier) return null;
     
-    // Try multiple image sources in order of preference
-    const imageSources = [
-      nft.media?.[0]?.url,
-      nft.media?.[0]?.originalUrl,
-      nft.url,
-      // Fallback to MultiversX media API
-      nft.identifier ? `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}` : null,
-      nft.identifier ? `https://api.multiversx.com/nfts/${nft.identifier}/thumbnail` : null
-    ].filter(Boolean) as string[];
-    
-    return imageSources[0] || null;
+    // Try NFT media URLs first (usually faster), then fallback to MultiversX API
+    return nft.media?.[0]?.url || 
+           nft.media?.[0]?.originalUrl || 
+           nft.url || 
+           `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}`;
   };
 
   const PlayerPlaceholder = ({
@@ -623,83 +700,27 @@ export default function SquadsPage() {
 
     // Get all possible image sources and try them in order with delay
     useEffect(() => {
-      if (!player) {
+      if (!player || !player.identifier) {
         setImageSrc(null);
         setImageError(false);
         return;
       }
 
-      const sources = [
-        player.media?.[0]?.url,
-        player.media?.[0]?.originalUrl,
-        player.url,
-        `https://media.multiversx.com/nfts/thumbnail/${player.identifier}`,
-        `https://api.multiversx.com/nfts/${player.identifier}/thumbnail`
-      ].filter(Boolean) as string[];
-
-      if (sources.length === 0) {
-        setImageError(true);
-        return;
-      }
-
-      // Add to queue for delayed loading
-      const loadImageWithDelay = async () => {
-        // Wait for queue
-        while (imageLoadRef.current.processing) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-        
-        imageLoadRef.current.processing = true;
-        
-        // Add delay before loading (0.35 seconds)
-        await new Promise(resolve => setTimeout(resolve, 350));
-        
-        // Try first source
-        setImageSrc(sources[0]);
-        setImageError(false);
-        
-        imageLoadRef.current.processing = false;
-      };
-
-      loadImageWithDelay();
+      // Try NFT media URLs first, then fallback to MultiversX API
+      const imageUrl = player.media?.[0]?.url || 
+                       player.media?.[0]?.originalUrl || 
+                       player.url || 
+                       `https://media.multiversx.com/nfts/thumbnail/${player.identifier}`;
+      setImageSrc(imageUrl);
+      setImageError(false);
     }, [player]);
 
-    const handleImageError = async () => {
-      if (!player) return;
+    const handleImageError = () => {
+      if (!player || !player.identifier) return;
       
-      // Get all possible sources
-      const sources = [
-        player.media?.[0]?.url,
-        player.media?.[0]?.originalUrl,
-        player.url,
-        `https://media.multiversx.com/nfts/thumbnail/${player.identifier}`,
-        `https://api.multiversx.com/nfts/${player.identifier}/thumbnail`
-      ].filter(Boolean) as string[];
-
-      const currentIndex = sources.indexOf(imageSrc || '');
-      
-      // Try next source with delay
-      if (currentIndex < sources.length - 1) {
-        // Wait for queue
-        while (imageLoadRef.current.processing) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-        
-        imageLoadRef.current.processing = true;
-        
-        // Add delay before trying next source (0.35 seconds)
-        await new Promise(resolve => setTimeout(resolve, 350));
-        
-        setImageSrc(sources[currentIndex + 1]);
-        
-        imageLoadRef.current.processing = false;
-      } else {
-        // All sources failed
-        setImageError(true);
-        if (player.identifier) {
-          setImageErrors((prev) => new Set(prev).add(player.identifier));
-        }
-      }
+      // Mark as error and add to error set
+      setImageError(true);
+      setImageErrors((prev) => new Set(prev).add(player.identifier));
     };
 
     return (
@@ -716,8 +737,7 @@ export default function SquadsPage() {
               src={imageSrc}
               alt={playerName}
               className='w-full h-full object-cover scale-110'
-              crossOrigin='anonymous'
-              loading='eager'
+              loading='lazy'
               onError={handleImageError}
               onLoad={() => setImageError(false)}
             />
@@ -831,12 +851,22 @@ export default function SquadsPage() {
         <div className='flex flex-col gap-3'>
           {!isSubstituteWindowOpen() && (
             <div className='bg-yellow-500/20 border border-yellow-500/50 rounded-2xl p-4'>
-              <p className='text-yellow-200 text-sm text-center font-medium'>
+              <p className='text-yellow-200 text-sm text-center font-medium mb-2'>
                 ⏰ Substitutes are only available on Tuesdays and Fridays from 09:00-15:00 UTC
               </p>
-              <p className='text-yellow-300/80 text-xs text-center mt-1'>
+              <p className='text-yellow-300/80 text-xs text-center mb-2'>
                 {getSubstituteWindowMessage()}
               </p>
+              {countdown && (
+                <div className='mt-3 pt-3 border-t border-yellow-500/30'>
+                  <p className='text-yellow-200 text-xs text-center font-medium mb-1'>
+                    Opens in:
+                  </p>
+                  <p className='text-yellow-300 text-lg text-center font-bold tracking-wider'>
+                    {countdown}
+                  </p>
+                </div>
+              )}
             </div>
           )}
           <button
@@ -1014,11 +1044,11 @@ export default function SquadsPage() {
                 return filteredNfts.length > 0 ? (
                   <div className='grid grid-cols-2 gap-4'>
                     {filteredNfts.map((nft) => {
-                    const imageUrl =
-                      nft.media?.[0]?.url ||
-                      nft.media?.[0]?.originalUrl ||
-                      nft.url ||
-                      '';
+                    // Try NFT media URLs first, then fallback to MultiversX API
+                    const imageUrl = nft.media?.[0]?.url || 
+                                    nft.media?.[0]?.originalUrl || 
+                                    nft.url || 
+                                    (nft.identifier ? `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}` : '');
                     const isSelected =
                       selectedPlayers[selectedPosition]?.identifier === nft.identifier;
                     const isAlreadySelected = isNftSelected(nft.identifier) && !isSelected;
@@ -1041,6 +1071,12 @@ export default function SquadsPage() {
                               src={imageUrl}
                               alt={nft.name}
                               className='w-full h-full object-cover'
+                              loading='lazy'
+                              onError={() => {
+                                if (nft.identifier) {
+                                  setImageErrors((prev) => new Set(prev).add(nft.identifier));
+                                }
+                              }}
                             />
                             {/* Gradient overlay */}
                             <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>

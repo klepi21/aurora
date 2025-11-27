@@ -199,21 +199,21 @@ export default function LeaderboardPage() {
         <div className='flex items-end justify-center gap-4 relative'>
           {/* 2nd Place - Left */}
           {topThree[1] && (
-            <div className='flex flex-col items-center gap-3 flex-1 max-w-[120px]'>
+            <div className='flex flex-col items-center gap-2 flex-1 max-w-[100px]'>
               <div
-                className={`relative w-24 h-24 rounded-full border-4 ${getRankBorderColor(2)} bg-gray-800 flex items-center justify-center overflow-hidden`}
+                className={`relative w-20 h-20 rounded-full border-2 ${getRankBorderColor(2)} bg-gray-800 flex items-center justify-center overflow-hidden`}
               >
-                <div className='text-5xl'>
+                <div className='text-4xl'>
                   🥈
                 </div>
               </div>
               <p 
-                className='text-base font-semibold text-white text-center cursor-pointer hover:text-[#8ED6C1] transition-colors'
+                className='text-sm font-semibold text-white text-center cursor-pointer hover:text-[#8ED6C1] transition-colors break-words'
                 onClick={() => topThree[1] && handleTeamClick(topThree[1])}
               >
                 {topThree[1]?.teamName || 'Unnamed Team'}
               </p>
-              <p className={`text-lg font-bold ${getRankTextColor(2)}`}>
+              <p className={`text-base font-bold ${getRankTextColor(2)}`}>
                 {(topThree[1]?.points || 0).toLocaleString()} P
               </p>
             </div>
@@ -221,21 +221,21 @@ export default function LeaderboardPage() {
 
           {/* 1st Place - Center (Largest) */}
           {topThree[0] && (
-            <div className='flex flex-col items-center gap-3 flex-1 max-w-[140px]'>
+            <div className='flex flex-col items-center gap-2 flex-1 max-w-[120px]'>
               <div
-                className={`relative w-32 h-32 rounded-full border-4 ${getRankBorderColor(1)} bg-gray-800 flex items-center justify-center overflow-hidden`}
+                className={`relative w-24 h-24 rounded-full border-2 ${getRankBorderColor(1)} bg-gray-800 flex items-center justify-center overflow-hidden`}
               >
-                <div className='text-6xl'>
+                <div className='text-4xl'>
                   🥇
                 </div>
               </div>
               <p 
-                className='text-lg font-bold text-white text-center cursor-pointer hover:text-[#3EB489] transition-colors'
+                className='text-sm font-bold text-white text-center cursor-pointer hover:text-[#3EB489] transition-colors break-words'
                 onClick={() => topThree[0] && handleTeamClick(topThree[0])}
               >
                 {topThree[0]?.teamName || 'Unnamed Team'}
               </p>
-              <p className={`text-xl font-bold ${getRankTextColor(1)}`}>
+              <p className={`text-base font-bold ${getRankTextColor(1)}`}>
                 {(topThree[0]?.points || 0).toLocaleString()} P
               </p>
             </div>
@@ -243,21 +243,21 @@ export default function LeaderboardPage() {
 
           {/* 3rd Place - Right */}
           {topThree[2] && (
-            <div className='flex flex-col items-center gap-3 flex-1 max-w-[120px]'>
+            <div className='flex flex-col items-center gap-2 flex-1 max-w-[100px]'>
               <div
-                className={`relative w-24 h-24 rounded-full border-4 ${getRankBorderColor(3)} bg-gray-800 flex items-center justify-center overflow-hidden`}
+                className={`relative w-20 h-20 rounded-full border-2 ${getRankBorderColor(3)} bg-gray-800 flex items-center justify-center overflow-hidden`}
               >
-                <div className='text-5xl'>
+                <div className='text-4xl'>
                   🥉
                 </div>
               </div>
               <p 
-                className='text-base font-semibold text-white text-center cursor-pointer hover:text-[#3EB489] transition-colors'
+                className='text-sm font-semibold text-white text-center cursor-pointer hover:text-[#3EB489] transition-colors break-words'
                 onClick={() => topThree[2] && handleTeamClick(topThree[2])}
               >
                 {topThree[2]?.teamName || 'Unnamed Team'}
               </p>
-              <p className={`text-lg font-bold ${getRankTextColor(3)}`}>
+              <p className={`text-base font-bold ${getRankTextColor(3)}`}>
                 {(topThree[2]?.points || 0).toLocaleString()} P
               </p>
             </div>
