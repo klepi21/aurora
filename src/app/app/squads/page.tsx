@@ -57,8 +57,6 @@ export default function SquadsPage() {
   const [pendingTransferTxHash, setPendingTransferTxHash] = useState<string>('');
   const pendingTransactions = useGetPendingTransactions();
   const pitchRef = useRef<HTMLDivElement>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const [playerPoints, setPlayerPoints] = useState<Record<string, number>>({});
   const [imageLoadQueue, setImageLoadQueue] = useState<Set<string>>(new Set());
   const imageLoadRef = useRef<{ queue: string[]; processing: boolean }>({ queue: [], processing: false });
@@ -234,8 +232,67 @@ export default function SquadsPage() {
     return BigInt(changedCount) * BigInt(transferCostPerPlayer);
   };
 
+  // Check if substitutes are currently available (Tuesdays and Fridays, 09:00-15:00 UTC)
+  const isSubstituteWindowOpen = () => {
+    const now = new Date();
+    const utcDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday
+    const utcHour = now.getUTCHours();
+    
+    // Tuesday = 2, Friday = 5
+    const isAllowedDay = utcDay === 2 || utcDay === 5;
+    const isAllowedTime = utcHour >= 9 && utcHour < 15;
+    
+    return isAllowedDay && isAllowedTime;
+  };
+
+  // Get next available substitute window message
+  const getSubstituteWindowMessage = () => {
+    const now = new Date();
+    const utcDay = now.getUTCDay();
+    const utcHour = now.getUTCHours();
+    
+    // Calculate next Tuesday
+    const nextTuesday = new Date(now);
+    const daysUntilTuesday = (2 - utcDay + 7) % 7 || 7;
+    nextTuesday.setUTCDate(now.getUTCDate() + daysUntilTuesday);
+    nextTuesday.setUTCHours(9, 0, 0, 0);
+    
+    // Calculate next Friday
+    const nextFriday = new Date(now);
+    const daysUntilFriday = (5 - utcDay + 7) % 7 || 7;
+    nextFriday.setUTCDate(now.getUTCDate() + daysUntilFriday);
+    nextFriday.setUTCHours(9, 0, 0, 0);
+    
+    // If it's Tuesday or Friday but outside hours, show today's window
+    if ((utcDay === 2 || utcDay === 5) && utcHour < 9) {
+      const todayWindow = new Date(now);
+      todayWindow.setUTCHours(9, 0, 0, 0);
+      return `Substitutes open today at ${todayWindow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
+    }
+    
+    // If it's Tuesday but after hours, show next Friday
+    if (utcDay === 2 && utcHour >= 15) {
+      return `Substitutes open next Friday at ${nextFriday.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
+    }
+    
+    // If it's Friday but after hours, show next Tuesday
+    if (utcDay === 5 && utcHour >= 15) {
+      return `Substitutes open next Tuesday at ${nextTuesday.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
+    }
+    
+    // Otherwise, show the next available window (Tuesday or Friday, whichever is sooner)
+    const nextWindow = nextTuesday < nextFriday ? nextTuesday : nextFriday;
+    const dayName = nextWindow.getUTCDay() === 2 ? 'Tuesday' : 'Friday';
+    return `Substitutes open next ${dayName} at ${nextWindow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
+  };
+
 
   const handleStartTransfer = () => {
+    // Check if substitute window is open
+    if (!isSubstituteWindowOpen()) {
+      showError('Substitutes are only available on Tuesdays and Fridays from 09:00-15:00 UTC', 5000);
+      return;
+    }
     setIsTransferMode(true);
     setSaveError('');
   };
@@ -285,7 +342,7 @@ export default function SquadsPage() {
         
         const changedCount = getChangedPlayersCount();
         if (changedCount > 0) {
-          success(`Transfer completed! ${changedCount} player${changedCount !== 1 ? 's' : ''} updated.`, 4000);
+          success(`Substitutes completed! ${changedCount} player${changedCount !== 1 ? 's' : ''} updated.`, 4000);
         } else {
           success('Team saved successfully!', 4000);
         }
@@ -347,7 +404,7 @@ export default function SquadsPage() {
               await saveTeamToDatabase();
             } else {
               // Transaction failed
-              const errorMsg = 'Transfer payment failed. Please try again.';
+              const errorMsg = 'Substitute payment failed. Please try again.';
               setSaveError(errorMsg);
               showError(errorMsg, 4000);
               setIsSavingTeam(false);
@@ -382,6 +439,12 @@ export default function SquadsPage() {
 
   const handleSaveTransfer = async () => {
     if (!address || !isAllPositionsFilled() || isSavingTeam) return;
+    
+    // Check if substitute window is open
+    if (!isSubstituteWindowOpen()) {
+      showError('Substitutes are only available on Tuesdays and Fridays from 09:00-15:00 UTC', 5000);
+      return;
+    }
 
     const changedCount = getChangedPlayersCount();
     if (changedCount === 0) {
@@ -408,9 +471,9 @@ export default function SquadsPage() {
       const { sentTransactions } = await signAndSendTransactions({
         transactions: [transaction],
         transactionsDisplayInfo: {
-          processingMessage: `Processing transfer payment (${changedCount} player${changedCount !== 1 ? 's' : ''})...`,
-          errorMessage: 'Failed to process transfer payment',
-          successMessage: 'Transfer payment successful!'
+          processingMessage: `Processing substitute payment (${changedCount} player${changedCount !== 1 ? 's' : ''})...`,
+          errorMessage: 'Failed to process substitute payment',
+          successMessage: 'Substitute payment successful!'
         }
       });
 
@@ -434,97 +497,12 @@ export default function SquadsPage() {
         throw new Error('Transaction failed to send');
       }
     } catch (error: unknown) {
-      console.error('Error processing transfer:', error);
-      setSaveError((error as Error)?.message || 'Failed to process transfer. Please try again.');
+      console.error('Error processing substitute:', error);
+      setSaveError((error as Error)?.message || 'Failed to process substitute. Please try again.');
       setIsSavingTeam(false);
     }
   };
 
-  const handleShareTeam = async () => {
-    if (!pitchRef.current) return;
-    
-    setIsCapturing(true);
-    try {
-      // Wait for all images to load before capturing
-      const images = pitchRef.current.querySelectorAll('img');
-      await Promise.all(
-        Array.from(images).map((img) => {
-          if (img.complete) return Promise.resolve();
-          return new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            // Timeout after 5 seconds
-            setTimeout(() => resolve(null), 5000);
-          });
-        })
-      );
-
-      // Small delay to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Dynamically import html2canvas
-      const html2canvas = (await import('html2canvas')).default;
-      
-      // Capture the pitch area with improved settings
-      const canvas = await html2canvas(pitchRef.current, {
-        backgroundColor: '#0A3124',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-        foreignObjectRendering: true,
-        imageTimeout: 15000,
-        removeContainer: false,
-        onclone: (clonedDoc) => {
-          // Ensure all images in cloned document have proper styling
-          const clonedImages = clonedDoc.querySelectorAll('img');
-          clonedImages.forEach((img) => {
-            const imgElement = img as HTMLImageElement;
-            imgElement.style.display = 'block';
-            imgElement.style.opacity = '1';
-            imgElement.style.visibility = 'visible';
-            // Ensure images are loaded
-            if (!imgElement.complete) {
-              imgElement.crossOrigin = 'anonymous';
-            }
-          });
-          
-          // Ensure text is visible
-          const textElements = clonedDoc.querySelectorAll('p');
-          textElements.forEach((p) => {
-            const pElement = p as HTMLParagraphElement;
-            pElement.style.visibility = 'visible';
-            pElement.style.opacity = '1';
-            pElement.style.color = '#ffffff';
-          });
-        }
-      });
-      
-      // Convert canvas to data URL
-      const imageUrl = canvas.toDataURL('image/png', 1.0);
-      setShareImageUrl(imageUrl);
-      setIsCapturing(false);
-    } catch (error) {
-      console.error('Error capturing team:', error);
-      setIsCapturing(false);
-    }
-  };
-
-  const handleDownloadImage = () => {
-    if (!shareImageUrl) return;
-    
-    const link = document.createElement('a');
-    link.download = 'my-afl-team.png';
-    link.href = shareImageUrl;
-    link.click();
-  };
-
-  const handleCloseShareModal = () => {
-    if (shareImageUrl) {
-      // Clean up the data URL if it was created from blob
-      setShareImageUrl(null);
-    }
-  };
 
   const handleSaveTeam = async () => {
     if (!address || !isAllPositionsFilled() || isSavingTeam) return;
@@ -848,45 +826,39 @@ export default function SquadsPage() {
         </div>
       )}
 
-      {/* Transfer Mode Controls */}
+      {/* Substitute Mode Controls */}
       {teamSaved && !isTransferMode && (
-        <div className='flex gap-3'>
+        <div className='flex flex-col gap-3'>
+          {!isSubstituteWindowOpen() && (
+            <div className='bg-yellow-500/20 border border-yellow-500/50 rounded-2xl p-4'>
+              <p className='text-yellow-200 text-sm text-center font-medium'>
+                ⏰ Substitutes are only available on Tuesdays and Fridays from 09:00-15:00 UTC
+              </p>
+              <p className='text-yellow-300/80 text-xs text-center mt-1'>
+                {getSubstituteWindowMessage()}
+              </p>
+            </div>
+          )}
           <button
             onClick={handleStartTransfer}
-            className='flex-1 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98'
+            disabled={!isSubstituteWindowOpen()}
+            className={`flex-1 font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 ${
+              isSubstituteWindowOpen()
+                ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white'
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
+            }`}
           >
-            Transfer Players
-          </button>
-          <button
-            onClick={handleShareTeam}
-            disabled={isCapturing}
-            className='bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-500/90 hover:to-blue-600/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[60px]'
-            title='Share Team'
-          >
-            {isCapturing ? (
-              <svg className='animate-spin h-5 w-5' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-                <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-                <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
-              </svg>
-            ) : (
-              <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-                <circle cx='18' cy='5' r='3'></circle>
-                <circle cx='6' cy='12' r='3'></circle>
-                <circle cx='18' cy='19' r='3'></circle>
-                <line x1='8.59' y1='13.51' x2='15.42' y2='17.49'></line>
-                <line x1='15.41' y1='6.51' x2='8.59' y2='10.49'></line>
-              </svg>
-            )}
+            Make Substitutes
           </button>
         </div>
       )}
 
-      {/* Transfer Mode Active - Show Save/Cancel */}
+      {/* Substitute Mode Active - Show Save/Cancel */}
       {isTransferMode && (
         <>
           <div className='bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-6 shadow-2xl border border-gray-800/50'>
             <p className='text-base text-white text-center mb-2'>
-              Transfer Mode Active
+              Substitute Mode Active
             </p>
             <p className='text-sm text-gray-400 text-center mb-4'>
               {getChangedPlayersCount() > 0 ? (
@@ -912,7 +884,7 @@ export default function SquadsPage() {
                 disabled={isSavingTeam || getChangedPlayersCount() === 0 || !isAllPositionsFilled()}
                 className='flex-1 px-5 py-3 text-base font-bold bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-98'
               >
-                {isSavingTeam ? 'Processing...' : `Save Transfer (${formatEgldAmount((BigInt(getChangedPlayersCount()) * BigInt(transferCostPerPlayer)).toString())} EGLD)`}
+                {isSavingTeam ? 'Processing...' : `Save Substitutes (${formatEgldAmount((BigInt(getChangedPlayersCount()) * BigInt(transferCostPerPlayer)).toString())} EGLD)`}
               </button>
             </div>
           </div>
@@ -1150,73 +1122,6 @@ export default function SquadsPage() {
         </div>
       )}
 
-      {/* Share Team Image Modal */}
-      {shareImageUrl && (
-        <div
-          className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm'
-          onClick={handleCloseShareModal}
-        >
-          <div
-            className='relative max-w-2xl w-full bg-gradient-to-br from-gray-900/95 to-black rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl flex flex-col'
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className='flex items-center justify-between p-6 border-b border-gray-800/50'>
-              <h2 className='text-2xl font-bold text-white'>
-                Your Team
-              </h2>
-              <button
-                onClick={handleCloseShareModal}
-                className='p-2 hover:bg-gray-800/50 rounded-full transition-colors'
-              >
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth={2}
-                  stroke='white'
-                  className='w-6 h-6'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Image Display */}
-            <div className='flex-1 overflow-y-auto p-6 flex items-center justify-center'>
-              <div className='relative w-full max-w-md'>
-                <img
-                  src={shareImageUrl}
-                  alt='My AFL Team'
-                  className='w-full h-auto rounded-xl shadow-2xl'
-                />
-              </div>
-            </div>
-
-            {/* Download Button */}
-            <div className='p-6 border-t border-gray-800/50'>
-              <button
-                onClick={handleDownloadImage}
-                className='w-full bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 flex items-center justify-center gap-2'
-              >
-                <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-                  <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'></path>
-                  <polyline points='7 10 12 15 17 10'></polyline>
-                  <line x1='12' y1='15' x2='12' y2='3'></line>
-                </svg>
-                Download Image
-              </button>
-              <p className='text-sm text-white/60 text-center mt-3'>
-                Save the image and share it on your favorite platform!
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
