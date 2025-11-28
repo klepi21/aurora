@@ -376,6 +376,52 @@ export default function App() {
 
   return (
     <div className='flex flex-col w-full gap-5'>
+      {/* Black Friday Sale Alert */}
+      <div className='relative bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 rounded-xl p-3 shadow-2xl border-2 border-yellow-400/50 overflow-hidden transform transition-all duration-300 hover:scale-[1.02]'>
+        {/* Animated shimmer overlay */}
+        <div className='absolute inset-0 animate-shimmer pointer-events-none'></div>
+        
+        {/* Animated gradient background */}
+        <div className='absolute inset-0 bg-gradient-to-r from-red-600 via-orange-500 via-yellow-500 to-orange-500 animate-gradient-x opacity-95'></div>
+        
+        {/* Sparkle effects */}
+        <div className='absolute top-2 left-4 w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping shadow-lg'></div>
+        <div className='absolute top-3 right-8 w-1 h-1 bg-yellow-200 rounded-full animate-ping shadow-lg' style={{ animationDelay: '0.5s' }}></div>
+        <div className='absolute bottom-2 left-1/3 w-1 h-1 bg-yellow-300 rounded-full animate-ping shadow-lg' style={{ animationDelay: '1s' }}></div>
+        
+        {/* Content */}
+        <div className='relative z-10 flex flex-col gap-1.5'>
+          {/* Header with animated icons */}
+          <div className='flex items-center justify-center gap-2'>
+            <span className='text-xl md:text-2xl animate-bounce drop-shadow-lg'>🛍️</span>
+            <h3 className='text-base md:text-xl font-black text-white drop-shadow-lg tracking-tight uppercase'>
+              BLACK FRIDAY AFL SALE
+            </h3>
+            <span className='text-xl md:text-2xl animate-bounce drop-shadow-lg' style={{ animationDelay: '0.2s' }}>⚽</span>
+          </div>
+          
+          {/* Main message */}
+          <div className='flex flex-col gap-1 text-center'>
+            <p className='text-sm md:text-base font-black text-white drop-shadow-md flex items-center justify-center gap-1.5'>
+              <span className='text-lg animate-pulse'>🎉</span>
+              <span>All Players <span className='text-yellow-200'>30% OFF</span> Today!</span>
+              <span className='text-lg animate-pulse' style={{ animationDelay: '0.3s' }}>🎉</span>
+            </p>
+            <p className='text-xs md:text-sm font-bold text-yellow-100 drop-shadow-md flex items-center justify-center gap-1.5'>
+              <span className='text-base'>✨</span>
+              <span>Create your team today and get a <span className='text-yellow-200 font-black'>FREE Limited Drop Player</span>!</span>
+              <span className='text-base'>✨</span>
+            </p>
+          </div>
+          
+          {/* Footer badge */}
+          <div className='flex items-center justify-center gap-1.5 mt-0.5'>
+            <span className='text-[10px] md:text-xs font-black text-white/95 uppercase tracking-wider'>Limited Time</span>
+            <span className='text-yellow-300 animate-pulse text-sm'>⚡</span>
+            <span className='text-[10px] md:text-xs font-black text-white/95 uppercase tracking-wider'>Today Only</span>
+          </div>
+        </div>
+      </div>
 
       {/* Aurora Image Box */}
       <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-2xl shadow-xl border border-gray-800/50 backdrop-blur-sm overflow-hidden'>
