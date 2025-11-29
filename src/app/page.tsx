@@ -188,81 +188,81 @@ export default function Home() {
             </div>
 
             {/* Desktop Layout */}
-            <div className='hidden md:block'>
+            <div className='hidden md:block relative z-10'>
               <div className='grid md:grid-cols-3 gap-8 md:gap-12 items-center'>
-              {/* Left Column */}
-              <div className='space-y-6'>
-                {/* Feature 01 */}
-                <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
-                  <div className='absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
-                  <div className='relative z-10'>
-                    <div className='text-6xl font-bold text-[#3EB489] mb-4'>01</div>
-                    <h3 className='text-xl font-bold text-white mb-3'>True Ownership</h3>
-                    <p className='text-white/70 text-base leading-relaxed'>
-                      Full control of your team through NFT ownership. Your players, your assets.
-                    </p>
+                {/* Left Column */}
+                <div className='space-y-6'>
+                  {/* Feature 01 */}
+                  <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                    <div className='absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                    <div className='relative z-10'>
+                      <div className='text-6xl font-bold text-[#3EB489] mb-4'>01</div>
+                      <h3 className='text-xl font-bold text-white mb-3'>True Ownership</h3>
+                      <p className='text-white/70 text-base leading-relaxed'>
+                        Full control of your team through NFT ownership. Your players, your assets.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Feature 03 */}
+                  <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                    <div className='absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                    <div className='relative z-10'>
+                      <div className='text-6xl font-bold text-[#3EB489] mb-4'>03</div>
+                      <h3 className='text-xl font-bold text-white mb-3'>Strategic Gameplay</h3>
+                      <p className='text-white/70 text-base leading-relaxed'>
+                        Build your 5-player team: 1 GK, 2 DEF, 2 ATT. Strategy matters.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Feature 03 */}
-                <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
-                  <div className='absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
-                  <div className='relative z-10'>
-                    <div className='text-6xl font-bold text-[#3EB489] mb-4'>03</div>
-                    <h3 className='text-xl font-bold text-white mb-3'>Strategic Gameplay</h3>
-                    <p className='text-white/70 text-base leading-relaxed'>
-                      Build your 5-player team: 1 GK, 2 DEF, 2 ATT. Strategy matters.
-                    </p>
+                {/* Center Column - Image */}
+                <div className='flex items-center justify-center min-h-[300px]'>
+                  <div className='relative w-full aspect-square'>
+                    <img
+                      src='/assets/img/Layer-2.png'
+                      alt='Aurora Football'
+                      className='w-full h-full object-contain'
+                      loading='lazy'
+                      width={400}
+                      height={400}
+                      onError={(e) => {
+                        console.error('Failed to load Layer-2.png');
+                        // Don't hide, show placeholder instead
+                        e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5BdXJvcmEgRm9vdGJhbGw8L3RleHQ+PC9zdmc+';
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className='space-y-6'>
+                  {/* Feature 02 */}
+                  <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                    <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                    <div className='relative z-10'>
+                      <div className='text-6xl font-bold text-[#3EB489] mb-4'>02</div>
+                      <h3 className='text-xl font-bold text-white mb-3'>Competitive Seasons</h3>
+                      <p className='text-white/70 text-base leading-relaxed'>
+                        Compete in 2-month seasons. Earn points, climb leaderboards, win rewards.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Feature 04 */}
+                  <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
+                    <div className='absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
+                    <div className='relative z-10'>
+                      <div className='text-6xl font-bold text-[#3EB489] mb-4'>04</div>
+                      <h3 className='text-xl font-bold text-white mb-3'>Earn Rewards</h3>
+                      <p className='text-white/70 text-base leading-relaxed'>
+                        Win USDC prizes, rare NFTs, and exclusive rewards based on performance.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Center Column - Image */}
-              <div className='flex items-center justify-center min-h-[300px]'>
-                <div className='relative w-full aspect-square'>
-                  <img
-                    src='/assets/img/Layer-2.png'
-                    alt='Aurora Football'
-                    className='w-full h-full object-contain'
-                    loading='lazy'
-                    width={400}
-                    height={400}
-                    onError={(e) => {
-                      console.error('Failed to load Layer-2.png');
-                      // Don't hide, show placeholder instead
-                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5BdXJvcmEgRm9vdGJhbGw8L3RleHQ+PC9zdmc+';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className='space-y-6'>
-                {/* Feature 02 */}
-                <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
-                  <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
-                  <div className='relative z-10'>
-                    <div className='text-6xl font-bold text-[#3EB489] mb-4'>02</div>
-                    <h3 className='text-xl font-bold text-white mb-3'>Competitive Seasons</h3>
-                    <p className='text-white/70 text-base leading-relaxed'>
-                      Compete in 2-month seasons. Earn points, climb leaderboards, win rewards.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Feature 04 */}
-                <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-8 shadow-2xl border border-gray-800/50 overflow-hidden group hover:border-[#3EB489]/50 transition-all'>
-                  <div className='absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-[#3EB489]/20 to-transparent rounded-full blur-3xl'></div>
-                  <div className='relative z-10'>
-                    <div className='text-6xl font-bold text-[#3EB489] mb-4'>04</div>
-                    <h3 className='text-xl font-bold text-white mb-3'>Earn Rewards</h3>
-                    <p className='text-white/70 text-base leading-relaxed'>
-                      Win USDC prizes, rare NFTs, and exclusive rewards based on performance.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
             </div>
           </div>
         </div>
