@@ -94,7 +94,7 @@ export default function Home() {
         {/* Features Section */}
         <div className='w-full px-6 md:px-12 py-12 md:py-20 relative overflow-hidden'>
           {/* Background Image */}
-          <div className='absolute inset-0 z-0'>
+          <div className='absolute inset-0 z-0 pointer-events-none'>
             <img
               src='/assets/img/bg2.png'
               alt='Background'
@@ -121,15 +121,18 @@ export default function Home() {
             <div className='block md:hidden space-y-6'>
               {/* Mobile Image - appears at top */}
               <div className='flex items-center justify-center py-4'>
-                <div className='relative w-full aspect-square max-w-[250px] mx-auto'>
+                <div className='relative w-full aspect-square max-w-[250px] mx-auto min-h-[200px]'>
                   <img
                     src='/assets/img/Layer-2.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
+                    width={250}
+                    height={250}
                     onError={(e) => {
                       console.error('Failed to load Layer-2.png (mobile)');
-                      e.currentTarget.style.display = 'none';
+                      // Don't hide, show placeholder instead
+                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5BdXJvcmEgRm9vdGJhbGw8L3RleHQ+PC9zdmc+';
                     }}
                   />
                 </div>
@@ -215,16 +218,19 @@ export default function Home() {
               </div>
 
               {/* Center Column - Image */}
-              <div className='flex items-center justify-center'>
+              <div className='flex items-center justify-center min-h-[300px]'>
                 <div className='relative w-full aspect-square'>
                   <img
                     src='/assets/img/Layer-2.png'
                     alt='Aurora Football'
                     className='w-full h-full object-contain'
                     loading='lazy'
+                    width={400}
+                    height={400}
                     onError={(e) => {
                       console.error('Failed to load Layer-2.png');
-                      e.currentTarget.style.display = 'none';
+                      // Don't hide, show placeholder instead
+                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5BdXJvcmEgRm9vdGJhbGw8L3RleHQ+PC9zdmc+';
                     }}
                   />
                 </div>
