@@ -1,9 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useGetIsLoggedIn } from '@/lib';
+import { useGetIsLoggedIn, useGetAccountInfo } from '@/lib';
 import { Button } from '@/components/Button';
 import { AuthRedirectWrapper } from '@/wrappers';
 import { ConnectButton } from '@/components/Layout/Header/components';
+
+// Allowed admin wallet addresses
+const ALLOWED_ADMIN_ADDRESSES = [
+  'erd1lzw8h6y4d8ep74d32xeva9wcrxkdtfhdm7rw3exq6ln3s7395t9s4uccfh',
+  'erd1u5p4njlv9rxvzvmhsxjypa69t2dran33x9ttpx0ghft7tt35wpfsxgynw4'
+];
 
 interface Player {
   nft_identifier: string;
@@ -16,9 +22,13 @@ interface Player {
 
 export default function AdminPage() {
   const isLoggedIn = useGetIsLoggedIn();
+  const { address } = useGetAccountInfo();
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  
+  // Check if the connected wallet is authorized
+  const isAuthorized = address && ALLOWED_ADMIN_ADDRESSES.includes(address);
   
   // Add player form
   const [newPlayerIdentifier, setNewPlayerIdentifier] = useState('');
@@ -211,8 +221,22 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* Unauthorized Access Message */}
+          {isLoggedIn && !isAuthorized && (
+            <div className='bg-gradient-to-br from-red-900/30 to-red-800/20 rounded-2xl p-8 md:p-12 shadow-2xl border border-red-500/50 text-center'>
+              <h2 className='text-2xl md:text-3xl font-bold text-red-400 mb-4'>🚫 Access Denied</h2>
+              <p className='text-white/80 text-lg mb-2'>You are not authorized to access this admin panel.</p>
+              <p className='text-white/60 text-sm'>Only authorized wallet addresses can access this page.</p>
+              {address && (
+                <p className='text-white/50 text-xs mt-4 font-mono break-all'>
+                  Connected: {address.slice(0, 10)}...{address.slice(-8)}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Add Player Form */}
-          {isLoggedIn && (
+          {isLoggedIn && isAuthorized && (
             <div className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 md:p-8 shadow-2xl border border-gray-800/50'>
               <h2 className='text-2xl font-bold text-white mb-6'>➕ Add New Player</h2>
               <div className='grid md:grid-cols-3 gap-4 md:gap-6'>
@@ -266,7 +290,7 @@ export default function AdminPage() {
           )}
 
           {/* Players Table */}
-          {isLoggedIn && (
+          {isLoggedIn && isAuthorized && (
             <div className='bg-gradient-to-br from-gray-900/95 to-black rounded-2xl p-6 md:p-8 shadow-2xl border border-gray-800/50'>
               <h2 className='text-2xl font-bold text-white mb-6'>📊 All Players</h2>
               
