@@ -88,9 +88,22 @@ export async function POST(request: NextRequest) {
 
 /**
  * Calculate and update total points for a user based on their team players
+ * This function preserves permanent points from removed players by reading current total_points
+ * @param wallet_address - User's wallet address
  */
 async function calculateAndUpdateUserPoints(wallet_address: string) {
   try {
+    // Get current user's total_points (which includes permanent points from removed players)
+    const { data: currentUser, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('total_points')
+      .eq('wallet_address', wallet_address)
+      .single();
+
+    // Extract permanent points: current total minus current team contributions
+    // We'll recalculate current team contributions and add them back
+    let permanentPoints = 0;
+    
     // Get user's team players with their points_at_creation
     const { data: userTeam, error: teamError } = await supabaseAdmin
       .from('user_teams')
@@ -98,6 +111,7 @@ async function calculateAndUpdateUserPoints(wallet_address: string) {
       .eq('wallet_address', wallet_address);
 
     if (teamError || !userTeam || userTeam.length === 0) {
+      // No team, keep current total_points as permanent
       return;
     }
 
@@ -118,19 +132,23 @@ async function calculateAndUpdateUserPoints(wallet_address: string) {
       players.map((p) => [p.nft_identifier, p.points || 0])
     );
 
-    // Calculate total: only count points gained AFTER team creation
-    // For each player: current_points - points_at_creation
-    const totalPoints = userTeam.reduce((sum, teamPlayer) => {
+    // Calculate current team contributions: only count points gained AFTER team creation
+    const currentTeamPoints = userTeam.reduce((sum, teamPlayer) => {
       const currentPoints = currentPointsMap.get(teamPlayer.player_nft_identifier) || 0;
-      // Handle NULL points_at_creation: if NULL, treat as 0 (points_at_creation defaults to 0)
-      // But if it's explicitly set, use that value
       const pointsAtCreation = teamPlayer.points_at_creation !== null && teamPlayer.points_at_creation !== undefined 
         ? teamPlayer.points_at_creation 
         : 0;
-      // Only count positive differences (points gained after team creation)
       const pointsGained = Math.max(0, currentPoints - pointsAtCreation);
       return sum + pointsGained;
     }, 0);
+
+    // Calculate permanent points: current total - current team contributions
+    // This preserves points from previously removed players
+    const currentTotal = currentUser?.total_points || 0;
+    permanentPoints = Math.max(0, currentTotal - currentTeamPoints);
+
+    // Total points = permanent points + updated current team contributions
+    const totalPoints = permanentPoints + currentTeamPoints;
 
     // Update user's total_points
     await supabaseAdmin
