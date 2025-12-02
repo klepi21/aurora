@@ -90,17 +90,23 @@ export async function POST(request: NextRequest) {
       (existingTeam || []).map((t) => [t.player_nft_identifier, t.points_at_creation])
     );
 
-    // 3. Calculate permanent points from players being removed
-    // Get current user's total_points (which includes permanent points from previous removals)
-    const { data: currentUser, error: userFetchError } = await supabaseAdmin
-      .from('users')
-      .select('total_points')
-      .eq('wallet_address', wallet_address)
-      .single();
-
-    let permanentPoints = (currentUser?.total_points || 0);
+    // 3. Calculate permanent points correctly
+    // Strategy: 
+    // 1. Calculate current team contributions (before deletion)
+    // 2. Extract permanent points = total_points - current team contributions
+    // 3. Add points from removed players to permanent points
+    let permanentPoints = 0;
 
     if (existingTeam && existingTeam.length > 0) {
+      // Get current user's total_points
+      const { data: currentUser, error: userFetchError } = await supabaseAdmin
+        .from('users')
+        .select('total_points')
+        .eq('wallet_address', wallet_address)
+        .single();
+
+      const currentTotal = currentUser?.total_points || 0;
+
       // Get current points for all existing players
       const existingPlayerIdentifiers = existingTeam.map((t) => t.player_nft_identifier);
       const { data: existingPlayersData, error: existingPlayersError } = await supabaseAdmin
@@ -112,6 +118,19 @@ export async function POST(request: NextRequest) {
         const existingPlayerPointsMap = new Map(
           existingPlayersData.map((p) => [p.nft_identifier, p.points || 0])
         );
+
+        // Calculate current team contributions (before deletion)
+        const currentTeamContributions = existingTeam.reduce((sum, teamPlayer) => {
+          const currentPoints = existingPlayerPointsMap.get(teamPlayer.player_nft_identifier) || 0;
+          const pointsAtCreation = teamPlayer.points_at_creation !== null && teamPlayer.points_at_creation !== undefined
+            ? teamPlayer.points_at_creation
+            : 0;
+          const pointsGained = Math.max(0, currentPoints - pointsAtCreation);
+          return sum + pointsGained;
+        }, 0);
+
+        // Extract permanent points: total - current team contributions
+        permanentPoints = Math.max(0, currentTotal - currentTeamContributions);
 
         // Identify players being removed (in old team but not in new team)
         const newPlayerIdentifiers = new Set(players.map((p) => p.nft_identifier));
@@ -128,7 +147,18 @@ export async function POST(request: NextRequest) {
           const pointsEarned = Math.max(0, currentPoints - pointsAtCreation);
           permanentPoints += pointsEarned;
         }
+      } else {
+        // If we can't fetch player data, use current total as permanent (fallback)
+        permanentPoints = currentTotal;
       }
+    } else {
+      // No existing team, get current total_points as permanent
+      const { data: currentUser, error: userFetchError } = await supabaseAdmin
+        .from('users')
+        .select('total_points')
+        .eq('wallet_address', wallet_address)
+        .single();
+      permanentPoints = currentUser?.total_points || 0;
     }
 
     // 4. Delete existing team for this user
