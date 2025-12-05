@@ -52,13 +52,14 @@ export default function BetPage() {
   const { address } = useGetAccountInfo();
   const { nonce } = useGetAccount();
   const { network } = useGetNetworkConfig();
-  const { addToast } = useToastContext();
+  const { error: showError } = useToastContext();
   const [loading, setLoading] = useState(true);
   const [bets, setBets] = useState<Bet[]>([]);
   const [userBets, setUserBets] = useState<Map<number, UserBet>>(new Map());
   const [selectedBet, setSelectedBet] = useState<Bet | null>(null);
   const [betAmount, setBetAmount] = useState('');
   const [selectedOutcome, setSelectedOutcome] = useState<number | null>(null);
+  const [showBettingInfoModal, setShowBettingInfoModal] = useState(false);
   const [showCreateBetInfoModal, setShowCreateBetInfoModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBetModal, setShowBetModal] = useState(false);
@@ -381,14 +382,11 @@ export default function BetPage() {
         }
       }
     } catch (error) {
-      addToast({
-        type: 'error',
-        message: 'Failed to load bets'
-      });
+      showError('Failed to load bets');
     } finally {
       setLoading(false);
     }
-  }, [network, address, addToast]);
+  }, [network, address, showError]);
 
   // Fetch open bets on mount
   useEffect(() => {
@@ -397,19 +395,13 @@ export default function BetPage() {
 
   const handlePlaceBet = async () => {
     if (!selectedBet || selectedOutcome === null || !betAmount || !address) {
-      addToast({
-        type: 'error',
-        message: 'Please select an outcome and enter an amount'
-      });
+      showError('Please select an outcome and enter an amount');
       return;
     }
 
     const amount = parseFloat(betAmount);
     if (isNaN(amount) || amount <= 0) {
-      addToast({
-        type: 'error',
-        message: 'Please enter a valid amount'
-      });
+      showError('Please enter a valid amount');
       return;
     }
 
@@ -458,35 +450,23 @@ export default function BetPage() {
         window.location.reload();
       }, 2000);
     } catch (error) {
-      addToast({
-        type: 'error',
-        message: 'Failed to place bet'
-      });
+      showError('Failed to place bet');
     }
   };
 
   const handleCreateBet = async () => {
     if (!createBetData.title || !createBetData.question || !createBetData.closing_timestamp || !address) {
-      addToast({
-        type: 'error',
-        message: 'Please fill in all required fields'
-      });
+      showError('Please fill in all required fields');
       return;
     }
 
     const validOutcomes = createBetData.outcomes.filter(o => o.trim() !== '');
     if (validOutcomes.length < 2) {
-      addToast({
-        type: 'error',
-        message: 'Please provide at least 2 outcomes'
-      });
+      showError('Please provide at least 2 outcomes');
       return;
     }
     if (validOutcomes.length > 5) {
-      addToast({
-        type: 'error',
-        message: 'Maximum 5 outcomes allowed'
-      });
+      showError('Maximum 5 outcomes allowed');
       return;
     }
 
@@ -504,10 +484,7 @@ export default function BetPage() {
     const closingDateUTC = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
     const now = new Date();
     if (closingDateUTC <= now) {
-      addToast({
-        type: 'error',
-        message: 'Closing time must be in the future'
-      });
+      showError('Closing time must be in the future');
       return;
     }
 
@@ -598,10 +575,7 @@ export default function BetPage() {
         window.location.reload();
       }, 2000);
     } catch (error) {
-      addToast({
-        type: 'error',
-        message: 'Failed to create bet'
-      });
+      showError('Failed to create bet');
     }
   };
 
@@ -698,12 +672,34 @@ export default function BetPage() {
     <div className='min-h-screen pb-20'>
       <div className='flex justify-between items-center mb-6'>
         <h1 className='text-3xl font-bold text-white'>Betting</h1>
-        <Button
-          onClick={() => setShowCreateBetInfoModal(true)}
-          className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90'
-        >
-          Create Bet
-        </Button>
+        <div className='flex items-center gap-3'>
+          <button
+            onClick={() => setShowBettingInfoModal(true)}
+            className='p-2 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors'
+            title='How Betting Works'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-6 w-6 text-white'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+              />
+            </svg>
+          </button>
+          <Button
+            onClick={() => setShowCreateBetInfoModal(true)}
+            className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90'
+          >
+            Create Bet
+          </Button>
+        </div>
       </div>
 
       {bets.length === 0 ? (
@@ -728,6 +724,13 @@ export default function BetPage() {
             />
           ))}
         </div>
+      )}
+
+      {/* Betting Info Modal */}
+      {showBettingInfoModal && (
+        <BettingInfoModal
+          onClose={() => setShowBettingInfoModal(false)}
+        />
       )}
 
       {/* Create Bet Info Modal */}
@@ -863,6 +866,117 @@ function BetCard({
       >
         {userBet ? 'Bet More' : 'Place Bet'}
       </Button>
+    </div>
+  );
+}
+
+function BettingInfoModal({
+  onClose
+}: {
+  onClose: () => void;
+}) {
+  return (
+    <div className='fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto'>
+      <div className='bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 max-w-2xl w-full border border-gray-700/50 shadow-2xl my-8'>
+        <div className='flex justify-between items-start mb-6'>
+          <h2 className='text-2xl font-bold text-white'>How Betting Works</h2>
+          <button
+            onClick={onClose}
+            className='text-white/70 hover:text-white text-2xl transition-colors'
+          >
+            ×
+          </button>
+        </div>
+
+        <div className='space-y-6 max-h-[70vh] overflow-y-auto pr-2'>
+          {/* Overview */}
+          <div className='bg-gray-800/50 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>🎯</span> Overview
+            </h3>
+            <p className='text-white/80 text-sm leading-relaxed'>
+              AuroraBet is a peer-to-peer betting platform where you can create bets or wager EGLD on outcomes. 
+              Everything happens on-chain for complete transparency and fairness.
+            </p>
+          </div>
+
+          {/* Creating Bets */}
+          <div className='bg-gray-800/50 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>➕</span> Creating Bets
+            </h3>
+            <div className='space-y-2 text-white/80 text-sm'>
+              <p>• <span className='font-semibold text-white'>Regular users:</span> Pay 1 EGLD to create a bet</p>
+              <p className='ml-4 text-xs text-white/60'>- 0.5 EGLD goes to the bet pool</p>
+              <p className='ml-4 text-xs text-white/60'>- 0.5 EGLD goes to developers</p>
+              <p>• You can create up to <span className='font-semibold text-white'>5 outcomes</span> per bet</p>
+              <p>• Maximum <span className='font-semibold text-white'>1 open bet</span> per user at a time</p>
+              <p>• As a bet creator, you'll receive <span className='font-semibold text-[#3EB489]'>3%</span> of the total betted amount</p>
+            </div>
+          </div>
+
+          {/* Placing Bets */}
+          <div className='bg-gray-800/50 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>💰</span> Placing Bets
+            </h3>
+            <div className='space-y-2 text-white/80 text-sm'>
+              <p>• Bet on any open bet until the closing time</p>
+              <p>• You can bet on <span className='font-semibold text-white'>multiple outcomes</span> of the same bet</p>
+              <p>• You can place <span className='font-semibold text-white'>multiple bets</span> on the same outcome</p>
+              <p>• All bets use <span className='font-semibold text-white'>EGLD</span> only</p>
+            </div>
+          </div>
+
+          {/* How You Win */}
+          <div className='bg-gray-800/50 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>🏆</span> How You Win
+            </h3>
+            <div className='space-y-2 text-white/80 text-sm'>
+              <p>• After the bet closes, admins select the winning outcome</p>
+              <p>• <span className='font-semibold text-white'>90%</span> of the total pool is distributed to winners</p>
+              <p>• Your payout = <span className='font-semibold text-[#3EB489]'>(Your Stake / Total Stake on Winning Outcome) × Reward Pool</span></p>
+              <p>• The earlier you bet, the better your odds!</p>
+            </div>
+          </div>
+
+          {/* Fees */}
+          <div className='bg-gray-800/50 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>💸</span> Fees
+            </h3>
+            <div className='space-y-2 text-white/80 text-sm'>
+              <p>• <span className='font-semibold text-white'>10%</span> settlement fee is taken from the total pool</p>
+              <p className='ml-4 text-xs text-white/60'>- 7% goes to platform creators</p>
+              <p className='ml-4 text-xs text-white/60'>- 3% goes to the bet creator</p>
+              <p>• No fees if a bet is cancelled with no bets placed</p>
+            </div>
+          </div>
+
+          {/* Important Notes */}
+          <div className='bg-[#3EB489]/10 border border-[#3EB489]/30 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>⚠️</span> Important Notes
+            </h3>
+            <div className='space-y-2 text-white/80 text-sm'>
+              <p>• Maximum <span className='font-semibold text-white'>30 open bets</span> can exist at once</p>
+              <p>• Bet creators cannot modify bets after creation</p>
+              <p>• All timestamps are in <span className='font-semibold text-white'>UTC</span></p>
+              <p>• If no one bets on the winning outcome, the entire pool goes to platform creators</p>
+            </div>
+          </div>
+        </div>
+
+        <div className='mt-6'>
+          <Button
+            onClick={onClose}
+            className='w-full py-2.5 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90 transition-opacity font-semibold'
+          >
+            Got it!
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
