@@ -823,10 +823,8 @@ function BetCard({
       </div>
 
       <div className='mb-3'>
-        <p className='text-white/60 text-xs mb-2'>
-          Closes: {formatDate(bet.closing_timestamp)}
-        </p>
-        <p className='text-white/60 text-xs'>
+        <BetCountdown closingTimestamp={bet.closing_timestamp} />
+        <p className='text-white/60 text-xs mt-2'>
           Total Pool: {formatEGLD(bet.total_pool)} EGLD
         </p>
       </div>
@@ -866,6 +864,62 @@ function BetCard({
       >
         {userBet ? 'Bet More' : 'Place Bet'}
       </Button>
+    </div>
+  );
+}
+
+function BetCountdown({ closingTimestamp }: { closingTimestamp: number }) {
+  const [timeRemaining, setTimeRemaining] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+
+  useEffect(() => {
+    const calculateTimeRemaining = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = closingTimestamp - now;
+
+      if (remaining <= 0) {
+        setTimeRemaining({ hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const hours = Math.floor(remaining / 3600);
+      const minutes = Math.floor((remaining % 3600) / 60);
+      const seconds = remaining % 60;
+      setTimeRemaining({ hours, minutes, seconds });
+    };
+
+    // Calculate immediately
+    calculateTimeRemaining();
+
+    // Update every second for real-time countdown
+    const interval = setInterval(calculateTimeRemaining, 1000);
+
+    return () => clearInterval(interval);
+  }, [closingTimestamp]);
+
+  if (timeRemaining === null) {
+    return (
+      <p className='text-white/60 text-xs mb-2'>
+        Bet Closes in: Calculating...
+      </p>
+    );
+  }
+
+  if (timeRemaining.hours === 0 && timeRemaining.minutes === 0 && timeRemaining.seconds === 0) {
+    return (
+      <p className='text-red-400 text-xs mb-2 font-semibold'>
+        ⏰ Bet Closed
+      </p>
+    );
+  }
+
+  return (
+    <div className='flex items-center gap-2 mb-2'>
+      <span className='text-white/60 text-xs'>Bet Closes in:</span>
+      <div className='flex items-center gap-1 bg-[#3EB489]/20 border border-[#3EB489]/50 rounded-lg px-2 py-1'>
+        <span className='text-[#3EB489] text-sm font-bold'>
+          {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
+        </span>
+      </div>
     </div>
   );
 }
