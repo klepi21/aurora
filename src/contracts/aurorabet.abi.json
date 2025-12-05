@@ -1,0 +1,703 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.91.1",
+            "commitHash": "ed61e7d7e242494fb7057f2657300d9e77bb4fcb",
+            "commitDate": "2025-11-07",
+            "channel": "Stable",
+            "short": "rustc 1.91.1 (ed61e7d7e 2025-11-07)"
+        },
+        "contractCrate": {
+            "name": "aurorabet",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.58.0"
+        }
+    },
+    "name": "AuroraBet",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "sc_creator_fee_address",
+                "type": "Address"
+            }
+        ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "docs": [
+                "Create a new bet with outcomes passed as MultiValueEncoded"
+            ],
+            "name": "createBet",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "title",
+                    "type": "bytes"
+                },
+                {
+                    "name": "question",
+                    "type": "bytes"
+                },
+                {
+                    "name": "closing_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcomes",
+                    "type": "variadic<bytes>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "placeBet",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u8"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "closeBet",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "finalizeBet",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "winner_outcome",
+                    "type": "u8"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "deleteBet",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getOpenBets",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Bet>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getClosedBets",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Bet>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getSettledBets",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Bet>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getBetById",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Bet"
+                }
+            ]
+        },
+        {
+            "name": "getOutcomeText",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u8"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "getUserBets",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<UserBet>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getPotentialReturn",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u8"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "betsLatestId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "scCreatorFeeAddress",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        },
+        {
+            "name": "maxOpenBets",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "betCreationFee",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "settlementFeePercentage",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "creatorFeePercentage",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "betIds",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "betFromId",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Bet"
+                }
+            ]
+        },
+        {
+            "name": "outcomeText",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "poolsPerOutcome",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "bettorsPerOutcome",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "stakesPerOutcome",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u64"
+                },
+                {
+                    "name": "bettor",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "openBetIds",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "closedBetIds",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "settledBetIds",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "userOpenBetsCreated",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "userBets",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<u64>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "userBetDetails",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                },
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "UserBet"
+                }
+            ]
+        },
+        {
+            "name": "admins",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "maxAdmins",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getIsScPaused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "pauseSc",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "resumeSc",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "addAdmin",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "removeAdmin",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getAdmins",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "setScCreatorFeeAddress",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setMaxOpenBets",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "max_bets",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setBetCreationFee",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "fee",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setSettlementFeePercentage",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "percentage",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setCreatorFeePercentage",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "percentage",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Bet": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "title",
+                    "type": "bytes"
+                },
+                {
+                    "name": "question",
+                    "type": "bytes"
+                },
+                {
+                    "name": "num_outcomes",
+                    "type": "u8"
+                },
+                {
+                    "name": "creator",
+                    "type": "Address"
+                },
+                {
+                    "name": "closing_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "state",
+                    "type": "BetState"
+                },
+                {
+                    "name": "general_pool",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "total_pool",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "winner_outcome",
+                    "type": "Option<u8>"
+                }
+            ]
+        },
+        "BetState": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Open",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Closed",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Settled",
+                    "discriminant": 2
+                }
+            ]
+        },
+        "UserBet": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "bet_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "outcome_index",
+                    "type": "u8"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        }
+    }
+}

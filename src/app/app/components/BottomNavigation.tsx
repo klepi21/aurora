@@ -1,14 +1,13 @@
 'use client';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { RouteNamesEnum } from '@/localConstants';
-import { getAccountProvider } from '@/lib';
 import homeIcon from '../../../../public/assets/img/home.png';
 import myTeamIcon from '../../../../public/assets/img/myteam.png';
 import leaderboardIcon from '../../../../public/assets/img/leaderboard.png';
 import transferIcon from '../../../../public/assets/img/transfer.png';
-import disconnectIcon from '../../../../public/assets/img/dissconnect.png';
+import betIcon from '../../../../public/assets/img/btnbet.png';
 
 interface NavItem {
   label: string;
@@ -71,13 +70,12 @@ const navItems: NavItem[] = [
     )
   },
   {
-    label: 'Exit',
-    path: '#',
-    isAction: true,
+    label: 'Bet',
+    path: `${RouteNamesEnum.app}/bet`,
     icon: (
       <Image
-        src={disconnectIcon}
-        alt='Exit'
+        src={betIcon}
+        alt='Bet'
         width={32}
         height={32}
         className='w-8 h-8'
@@ -88,43 +86,14 @@ const navItems: NavItem[] = [
 
 export const BottomNavigation = () => {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleDisconnect = async () => {
-    try {
-      const provider = getAccountProvider();
-      await provider.logout();
-      router.push(RouteNamesEnum.home);
-    } catch (error) {
-      console.error('Error disconnecting:', error);
-    }
-  };
 
   return (
     <nav className='absolute bottom-0 left-0 right-0 bg-gradient-to-br from-gray-900/95 to-black rounded-t-[2rem] shadow-2xl z-50 border-t border-gray-800/50 pb-safe' style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
       <div className='flex items-center justify-around py-4 px-2'>
         {navItems.map((item) => {
           const isActive =
-            !item.isAction &&
-            (pathname === item.path ||
-              (item.path === RouteNamesEnum.app && pathname === RouteNamesEnum.app));
-
-          if (item.isAction) {
-            return (
-              <button
-                key={item.label}
-                onClick={handleDisconnect}
-                className='relative flex flex-col items-center justify-center gap-1 py-1 px-3 min-w-[60px] transition-colors hover:opacity-80 active:scale-95'
-              >
-                <div className='flex items-center justify-center transition-opacity opacity-70'>
-                  {item.icon}
-                </div>
-                <span className='text-xs font-medium text-white/70'>
-                  {item.label}
-                </span>
-              </button>
-            );
-          }
+            pathname === item.path ||
+            (item.path === RouteNamesEnum.app && pathname === RouteNamesEnum.app);
 
           return (
             <Link
