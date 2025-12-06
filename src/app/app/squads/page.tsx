@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import {
   useGetAccountInfo,
   useGetNetworkConfig,
@@ -60,6 +60,7 @@ export default function SquadsPage() {
   const [playerPoints, setPlayerPoints] = useState<Record<string, number>>({});
   const [transferCostPerPlayer, setTransferCostPerPlayer] = useState<string>('200000000000000000'); // Fallback: 0.2 EGLD
   const [countdown, setCountdown] = useState<string>('');
+  const [closingCountdown, setClosingCountdown] = useState<string>('');
 
   // Calculate countdown to next substitute window
   useEffect(() => {
@@ -136,11 +137,47 @@ export default function SquadsPage() {
       setCountdown(countdownStr.trim());
     };
 
+    // Calculate countdown to when current window closes (if window is open)
+    const calculateClosingCountdown = () => {
+      const now = new Date();
+      const utcDay = now.getUTCDay();
+      const utcHour = now.getUTCHours();
+      const utcMinute = now.getUTCMinutes();
+      const utcSecond = now.getUTCSeconds();
+
+      // Check if we're in a substitute window (Tuesday or Friday, 9-15 UTC)
+      if ((utcDay === 2 || utcDay === 5) && utcHour >= 9 && utcHour < 15) {
+        // Window is open - calculate time until 15:00 UTC
+        const closingTime = new Date(now);
+        closingTime.setUTCHours(15, 0, 0, 0);
+        
+        const diff = closingTime.getTime() - now.getTime();
+        
+        if (diff <= 0) {
+          setClosingCountdown('Substitutes closing now!');
+          return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const closingCountdownStr = `${hours}h ${minutes}m ${seconds}s`;
+        setClosingCountdown(closingCountdownStr);
+      } else {
+        setClosingCountdown('');
+      }
+    };
+
     // Calculate immediately
     calculateCountdown();
+    calculateClosingCountdown();
 
     // Update every second
-    const interval = setInterval(calculateCountdown, 1000);
+    const interval = setInterval(() => {
+      calculateCountdown();
+      calculateClosingCountdown();
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -422,6 +459,7 @@ export default function SquadsPage() {
         setShowSuccessNotification(true);
         setPendingTransferTxHash('');
         setIsSavingTeam(false);
+        setSaveError(''); // Clear any previous errors
         
         const changedCount = getChangedPlayersCount();
         if (changedCount > 0) {
@@ -677,7 +715,7 @@ export default function SquadsPage() {
            `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}`;
   };
 
-  const PlayerPlaceholder = ({
+  const PlayerPlaceholder = memo(({
     position,
     player
   }: {
@@ -699,8 +737,10 @@ export default function SquadsPage() {
     const playerName = player?.name || getPositionLabel(position);
 
     // Get all possible image sources and try them in order with delay
+    // Use identifier as dependency to prevent unnecessary rerenders
+    const playerIdentifier = player?.identifier;
     useEffect(() => {
-      if (!player || !player.identifier) {
+      if (!player || !playerIdentifier) {
         setImageSrc(null);
         setImageError(false);
         return;
@@ -710,10 +750,10 @@ export default function SquadsPage() {
       const imageUrl = player.media?.[0]?.url || 
                        player.media?.[0]?.originalUrl || 
                        player.url || 
-                       `https://media.multiversx.com/nfts/thumbnail/${player.identifier}`;
+                       `https://media.multiversx.com/nfts/thumbnail/${playerIdentifier}`;
       setImageSrc(imageUrl);
       setImageError(false);
-    }, [player]);
+    }, [playerIdentifier, player]);
 
     const handleImageError = () => {
       if (!player || !player.identifier) return;
@@ -772,7 +812,7 @@ export default function SquadsPage() {
         </div>
       </div>
     );
-  };
+  });
 
   return (
     <div className='flex flex-col w-full gap-5 pb-6'>
@@ -890,6 +930,16 @@ export default function SquadsPage() {
             <p className='text-base text-white text-center mb-2'>
               Substitute Mode Active
             </p>
+            {closingCountdown && (
+              <div className='bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-3 mb-4'>
+                <p className='text-yellow-200 text-xs text-center font-medium mb-1'>
+                  ⏰ Substitutes close in:
+                </p>
+                <p className='text-yellow-300 text-lg text-center font-bold tracking-wider'>
+                  {closingCountdown}
+                </p>
+              </div>
+            )}
             <p className='text-sm text-gray-400 text-center mb-4'>
               {getChangedPlayersCount() > 0 ? (
                 <>
