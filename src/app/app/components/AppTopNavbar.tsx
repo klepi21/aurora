@@ -19,8 +19,8 @@ export const AppTopNavbar = () => {
   };
 
   return (
-    <nav className='w-full bg-gradient-to-br from-gray-900/95 to-black border-b border-gray-800/50'>
-      <div className='flex items-center justify-between px-4 py-5'>
+    <nav className='w-full bg-gradient-to-br from-gray-900/95 to-black border-b border-gray-800/50 relative z-40'>
+      <div className='flex items-center justify-between px-4 py-2 md:py-5'>
         <div className='flex-1'></div>
         <div className='flex-1 flex justify-center'>
           <img src='/assets/img/logoafl.png' alt='Aurora Football League' className='h-8 md:h-10 w-auto' />
