@@ -22,6 +22,7 @@ import { useToastContext } from '@/components/Toast';
 import aurorabetAbi from '@/contracts/aurorabet.abi.json';
 
 const AURORABET_CONTRACT = 'erd1qqqqqqqqqqqqqpgqfjhw9ahyaadrw2k0dwr59yje7xmdc2cwfsms68nepa';
+const NFT_COLLECTION = 'AFL-6cefed';
 
 interface Bet {
   bet_id: number;
@@ -56,6 +57,8 @@ export default function BetPage() {
   const [loading, setLoading] = useState(true);
   const [bets, setBets] = useState<Bet[]>([]);
   const [userBets, setUserBets] = useState<Map<number, UserBet>>(new Map());
+  const [hasNft, setHasNft] = useState<boolean>(false);
+  const [checkingNft, setCheckingNft] = useState<boolean>(true);
   const [selectedBet, setSelectedBet] = useState<Bet | null>(null);
   const [betAmount, setBetAmount] = useState('');
   const [selectedOutcome, setSelectedOutcome] = useState<number | null>(null);
@@ -69,6 +72,36 @@ export default function BetPage() {
     closing_timestamp: '',
     outcomes: ['', '']
   });
+
+  // Check if user has NFTs from AFL-6cefed collection
+  useEffect(() => {
+    const checkNftOwnership = async () => {
+      if (!address || !network.apiAddress) {
+        setHasNft(false);
+        setCheckingNft(false);
+        return;
+      }
+
+      setCheckingNft(true);
+      try {
+        const response = await fetch(
+          `${network.apiAddress}/accounts/${address}/nfts?collections=${NFT_COLLECTION}&size=1`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setHasNft(Array.isArray(data) && data.length > 0);
+        } else {
+          setHasNft(false);
+        }
+      } catch (error) {
+        setHasNft(false);
+      } finally {
+        setCheckingNft(false);
+      }
+    };
+
+    checkNftOwnership();
+  }, [address, network.apiAddress]);
 
   const fetchBets = useCallback(async () => {
     if (!network.apiAddress) return;
@@ -693,12 +726,20 @@ export default function BetPage() {
               />
             </svg>
           </button>
-          <Button
-            onClick={() => setShowCreateBetInfoModal(true)}
-            className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90'
-          >
-            Create Bet
-          </Button>
+          <div className='flex flex-col items-end gap-2'>
+            <Button
+              onClick={() => setShowCreateBetInfoModal(true)}
+              disabled={!hasNft || checkingNft}
+              className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {checkingNft ? 'Checking...' : 'Create Bet'}
+            </Button>
+            {!checkingNft && !hasNft && (
+              <p className='text-red-400 text-xs text-right max-w-[200px]'>
+                You need to purchase an NFT from the AFL collection to create bets
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -960,12 +1001,24 @@ function BettingInfoModal({
               <span>➕</span> Creating Bets
             </h3>
             <div className='space-y-2 text-white/80 text-sm'>
+              <p>• <span className='font-semibold text-white'>NFT Required:</span> You must own at least one NFT from the <span className='font-semibold text-[#3EB489]'>AFL collection</span> to create bets</p>
               <p>• <span className='font-semibold text-white'>Regular users:</span> Pay 1 EGLD to create a bet</p>
               <p className='ml-4 text-xs text-white/60'>- 0.5 EGLD goes to the bet pool</p>
               <p className='ml-4 text-xs text-white/60'>- 0.5 EGLD goes to developers</p>
               <p>• You can create up to <span className='font-semibold text-white'>5 outcomes</span> per bet</p>
               <p>• Maximum <span className='font-semibold text-white'>1 open bet</span> per user at a time</p>
-              <p>• As a bet creator, you'll receive <span className='font-semibold text-[#3EB489]'>3%</span> of the total betted amount</p>
+            </div>
+          </div>
+
+          {/* Earning Potential */}
+          <div className='bg-gradient-to-r from-[#3EB489]/20 to-[#8ED6C1]/20 border border-[#3EB489]/50 rounded-lg p-4'>
+            <h3 className='text-lg font-semibold text-[#3EB489] mb-3 flex items-center gap-2'>
+              <span>💰</span> Earn Money by Creating Bets!
+            </h3>
+            <div className='space-y-2 text-white/80 text-sm'>
+              <p>• As a bet creator, you earn <span className='font-bold text-[#3EB489]'>5% of the total betted amount</span> when your bet settles</p>
+              <p>• Create engaging bets and <span className='font-semibold text-white'>bring people to bet on your outcomes</span> to maximize your earnings!</p>
+              <p>• The more people bet on your bet, the more you earn!</p>
             </div>
           </div>
 
@@ -989,7 +1042,7 @@ function BettingInfoModal({
             </h3>
             <div className='space-y-2 text-white/80 text-sm'>
               <p>• After the bet closes, admins select the winning outcome</p>
-              <p>• <span className='font-semibold text-white'>90%</span> of the total pool is distributed to winners</p>
+              <p>• <span className='font-semibold text-white'>92%</span> of the total pool is distributed to winners</p>
               <p>• Your payout = <span className='font-semibold text-[#3EB489]'>(Your Stake / Total Stake on Winning Outcome) × Reward Pool</span></p>
               <p>• The earlier you bet, the better your odds!</p>
             </div>
@@ -1001,9 +1054,8 @@ function BettingInfoModal({
               <span>💸</span> Fees
             </h3>
             <div className='space-y-2 text-white/80 text-sm'>
-              <p>• <span className='font-semibold text-white'>10%</span> settlement fee is taken from the total pool</p>
-              <p className='ml-4 text-xs text-white/60'>- 7% goes to platform creators</p>
-              <p className='ml-4 text-xs text-white/60'>- 3% goes to the bet creator</p>
+              <p>• <span className='font-semibold text-white'>8%</span> settlement fee is taken from the total pool</p>
+              <p className='ml-4 text-xs text-white/60'>- <span className='font-semibold text-[#3EB489]'>5%</span> goes to the bet creator</p>
               <p>• No fees if a bet is cancelled with no bets placed</p>
             </div>
           </div>
@@ -1066,7 +1118,7 @@ function CreateBetInfoModal({
             </div>
             <div className='bg-gray-800/50 rounded-lg p-4 space-y-2'>
               <p className='text-white/80 text-sm'>
-                <span className='font-semibold text-[#3EB489]'>From your bet:</span> You will receive 3% of the total betted amount.
+                <span className='font-semibold text-[#3EB489]'>From your bet:</span> You will receive 5% of the total betted amount.
               </p>
             </div>
           </div>
@@ -1090,7 +1142,7 @@ function CreateBetInfoModal({
 
             <div className='bg-gray-800/50 rounded-lg p-4'>
               <p className='text-white/80 text-sm'>
-                <span className='font-semibold text-[#3EB489]'>From your bet:</span> You will receive <span className='font-bold text-white'>3%</span> of the total betted amount.
+                <span className='font-semibold text-[#3EB489]'>From your bet:</span> You will receive <span className='font-bold text-white'>5%</span> of the total betted amount.
               </p>
             </div>
           </div>
