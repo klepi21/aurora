@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   useGetAccountInfo,
   useGetAccount,
@@ -23,6 +23,7 @@ import aurorabetAbi from '@/contracts/aurorabet.abi.json';
 
 const AURORABET_CONTRACT = 'erd1qqqqqqqqqqqqqpgqfjhw9ahyaadrw2k0dwr59yje7xmdc2cwfsms68nepa';
 const NFT_COLLECTION = 'AFL-6cefed';
+const WHITELISTED_ADDRESS = 'erd1g62v5447qhkn4hjhcrnkuzms9thgqd72xwkdvmwayjq7mqgpfsms5lkmwg';
 
 interface Bet {
   bet_id: number;
@@ -72,6 +73,14 @@ export default function BetPage() {
     closing_timestamp: '',
     outcomes: ['', '']
   });
+  const [activeTab, setActiveTab] = useState<'bets' | 'admin'>('bets');
+  const [closedBets, setClosedBets] = useState<Bet[]>([]);
+  const [loadingClosedBets, setLoadingClosedBets] = useState(false);
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [betToFinalize, setBetToFinalize] = useState<Bet | null>(null);
+  const [selectedWinnerOutcome, setSelectedWinnerOutcome] = useState<number | null>(null);
+  const [finalizeOutcomes, setFinalizeOutcomes] = useState<Outcome[]>([]);
+  const [loadingFinalizeOutcomes, setLoadingFinalizeOutcomes] = useState(false);
 
   // Check if user has NFTs from AFL-6cefed collection
   useEffect(() => {
@@ -421,6 +430,220 @@ export default function BetPage() {
     }
   }, [network, address, showError]);
 
+  // Fetch closed bets for admin
+  const fetchClosedBets = useCallback(async () => {
+    if (!network.apiAddress || !address) return;
+
+    const isWhitelisted = address.toLowerCase() === WHITELISTED_ADDRESS.toLowerCase();
+    if (!isWhitelisted) return;
+
+    setLoadingClosedBets(true);
+    try {
+      const proxy = new ProxyNetworkProvider(network.apiAddress);
+      const abi = AbiRegistry.create(aurorabetAbi);
+      const contractAddress = Address.newFromBech32(AURORABET_CONTRACT);
+
+      const scController = new SmartContractController({
+        chainID: network.chainId,
+        networkProvider: proxy,
+        abi
+      });
+
+      const closedBetsResult = await scController.query({
+        contract: contractAddress,
+        function: 'getClosedBets',
+        arguments: []
+      });
+
+      const parsedBets: Bet[] = [];
+      let betsArray: any[] = [];
+      
+      if (closedBetsResult) {
+        const resultValue = closedBetsResult.valueOf ? closedBetsResult.valueOf() : closedBetsResult;
+        if (Array.isArray(resultValue)) {
+          betsArray = resultValue.flat();
+        } else if (typeof resultValue === 'object' && resultValue !== null) {
+          const keys = Object.keys(resultValue);
+          if (keys.length > 0) {
+            const firstKeyValue = (resultValue as any)[keys[0]];
+            if (Array.isArray(firstKeyValue)) {
+              betsArray = firstKeyValue.flat();
+            } else {
+              betsArray = Object.values(resultValue).flat();
+            }
+          }
+        }
+      }
+
+      for (const betData of betsArray) {
+        if (!betData || typeof betData !== 'object') continue;
+        
+        try {
+          let title = '';
+          let question = '';
+          
+          if (betData.title) {
+            if (betData.title instanceof Uint8Array || (betData.title.constructor && betData.title.constructor.name === 'Uint8Array')) {
+              title = Buffer.from(betData.title).toString('utf-8');
+            } else if (Array.isArray(betData.title)) {
+              title = Buffer.from(betData.title).toString('utf-8');
+            } else {
+              const titleValue = betData.title.toString();
+              if (titleValue.startsWith('0x') || /^[0-9a-fA-F]+$/.test(titleValue)) {
+                title = Buffer.from(titleValue.replace('0x', ''), 'hex').toString('utf-8');
+              } else {
+                title = titleValue;
+              }
+            }
+          }
+          
+          if (betData.question) {
+            if (betData.question instanceof Uint8Array || (betData.question.constructor && betData.question.constructor.name === 'Uint8Array')) {
+              question = Buffer.from(betData.question).toString('utf-8');
+            } else if (Array.isArray(betData.question)) {
+              question = Buffer.from(betData.question).toString('utf-8');
+            } else {
+              const questionValue = betData.question.toString();
+              if (questionValue.startsWith('0x') || /^[0-9a-fA-F]+$/.test(questionValue)) {
+                question = Buffer.from(questionValue.replace('0x', ''), 'hex').toString('utf-8');
+              } else {
+                question = questionValue;
+              }
+            }
+          }
+
+          // Parse state enum (0=Open, 1=Closed, 2=Settled)
+          let state = 0;
+          if (betData.state !== undefined && betData.state !== null) {
+            if (betData.state.discriminant !== undefined) {
+              // Enum with discriminant property
+              state = Number(betData.state.discriminant);
+            } else if (typeof betData.state === 'number') {
+              state = betData.state;
+            } else if (betData.state.toString) {
+              const stateStr = betData.state.toString();
+              const parsed = Number(stateStr);
+              state = isNaN(parsed) ? 0 : parsed;
+            } else {
+              state = Number(betData.state) || 0;
+            }
+          }
+
+          let winner_outcome: number | null = null;
+          if (betData.winner_outcome !== undefined && betData.winner_outcome !== null) {
+            // Handle Option<u8> type - check if it's None variant
+            if (betData.winner_outcome.variant === 'None' || betData.winner_outcome.variant === 'none') {
+              winner_outcome = null;
+            } else if (betData.winner_outcome.variant === 'Some' || betData.winner_outcome.variant === 'some') {
+              const value = betData.winner_outcome.value !== undefined ? betData.winner_outcome.value : betData.winner_outcome;
+              winner_outcome = value !== undefined && value !== null ? Number(value) : null;
+            } else if (betData.winner_outcome.valueOf) {
+              const value = betData.winner_outcome.valueOf();
+              // Check if value is actually a valid number, not an object representing None
+              if (value !== undefined && value !== null && typeof value !== 'object') {
+                winner_outcome = Number(value);
+              } else {
+                winner_outcome = null;
+              }
+            } else if (typeof betData.winner_outcome === 'number') {
+              winner_outcome = betData.winner_outcome;
+            } else {
+              // Try to parse as number, but if it fails or is an object, set to null
+              const parsed = Number(betData.winner_outcome);
+              winner_outcome = isNaN(parsed) ? null : parsed;
+            }
+          }
+
+          let bet_id = 0;
+          if (betData.bet_id !== undefined && betData.bet_id !== null) {
+            if (typeof betData.bet_id === 'number') {
+              bet_id = betData.bet_id;
+            } else if (betData.bet_id.toNumber && typeof betData.bet_id.toNumber === 'function') {
+              bet_id = betData.bet_id.toNumber();
+            } else if (betData.bet_id.toString) {
+              bet_id = Number(betData.bet_id.toString());
+            } else {
+              bet_id = Number(betData.bet_id);
+            }
+          }
+
+          let num_outcomes = 0;
+          if (betData.num_outcomes !== undefined && betData.num_outcomes !== null) {
+            num_outcomes = typeof betData.num_outcomes === 'number' ? betData.num_outcomes : Number(betData.num_outcomes.toString());
+          }
+
+          let closing_timestamp = 0;
+          if (betData.closing_timestamp !== undefined && betData.closing_timestamp !== null) {
+            if (typeof betData.closing_timestamp === 'number') {
+              closing_timestamp = betData.closing_timestamp;
+            } else if (betData.closing_timestamp.toNumber && typeof betData.closing_timestamp.toNumber === 'function') {
+              closing_timestamp = betData.closing_timestamp.toNumber();
+            } else if (betData.closing_timestamp.toString) {
+              closing_timestamp = Number(betData.closing_timestamp.toString());
+            } else {
+              closing_timestamp = Number(betData.closing_timestamp);
+            }
+          }
+
+          let creator = '';
+          if (betData.creator) {
+            if (betData.creator.bech32) {
+              creator = betData.creator.bech32();
+            } else if (betData.creator.toString) {
+              creator = betData.creator.toString();
+            } else {
+              creator = String(betData.creator);
+            }
+          }
+
+          let general_pool = '0';
+          if (betData.general_pool !== undefined && betData.general_pool !== null) {
+            general_pool = betData.general_pool.toString ? betData.general_pool.toString() : String(betData.general_pool);
+          }
+
+          let total_pool = '0';
+          if (betData.total_pool !== undefined && betData.total_pool !== null) {
+            total_pool = betData.total_pool.toString ? betData.total_pool.toString() : String(betData.total_pool);
+          }
+
+          // Only include bets that are actually closed (state === 1) or settled (state === 2) without winner
+          // But for "Bets to Finalize", we only want closed bets (state === 1) without winner
+          parsedBets.push({
+            bet_id,
+            title,
+            question,
+            num_outcomes,
+            creator,
+            closing_timestamp,
+            state,
+            general_pool,
+            total_pool,
+            winner_outcome
+          });
+        } catch (error) {
+          // Silently skip invalid bets
+        }
+      }
+
+      setClosedBets(parsedBets);
+    } catch (error) {
+      showError('Failed to load closed bets');
+    } finally {
+      setLoadingClosedBets(false);
+    }
+  }, [network, address, showError]);
+
+  // Fetch closed bets when admin tab is active
+  useEffect(() => {
+    if (activeTab === 'admin' && address) {
+      const isWhitelisted = address.toLowerCase() === WHITELISTED_ADDRESS.toLowerCase();
+      if (isWhitelisted) {
+        fetchBets(); // Refresh open bets to get latest data
+        fetchClosedBets();
+      }
+    }
+  }, [activeTab, address, fetchClosedBets, fetchBets]);
+
   // Fetch open bets on mount
   useEffect(() => {
     fetchBets();
@@ -692,6 +915,154 @@ export default function BetPage() {
     });
   };
 
+  const isWhitelisted = address ? address.toLowerCase() === WHITELISTED_ADDRESS.toLowerCase() : false;
+
+  // Get bets that need to be closed (all bets from main page that have reached closing time)
+  const betsToClose = useMemo(() => {
+    if (!bets || bets.length === 0) return [];
+    const now = Math.floor(Date.now() / 1000);
+    // Show all bets that have reached their closing time (same as showing "Bet Closed" in UI)
+    return bets.filter(bet => {
+      return bet.closing_timestamp > 0 && bet.closing_timestamp <= now;
+    });
+  }, [bets]);
+
+  // Get closed bets that need outcome declared (closed but no winner)
+  // If a bet is in closedBets array, it means it was fetched from getClosedBets, so it's closed
+  const betsToFinalize = useMemo(() => {
+    if (!closedBets || closedBets.length === 0) return [];
+    return closedBets.filter(bet => {
+      // If bet is in closedBets array, it's closed (regardless of parsed state value)
+      // Just check that it doesn't have a winner outcome set
+      const hasNoWinner = bet.winner_outcome === null || bet.winner_outcome === undefined;
+      return hasNoWinner;
+    });
+  }, [closedBets]);
+
+  const handleCloseBet = async (betId: number) => {
+    if (!address) return;
+
+    try {
+      const abi = AbiRegistry.create(aurorabetAbi);
+      const scFactory = new SmartContractTransactionsFactory({
+        config: new TransactionsFactoryConfig({
+          chainID: network.chainId
+        }),
+        abi
+      });
+
+      const contractAddress = Address.newFromBech32(AURORABET_CONTRACT);
+
+      const transaction = await scFactory.createTransactionForExecute(
+        new Address(address),
+        {
+          contract: contractAddress,
+          function: 'closeBet',
+          gasLimit: BigInt(5000000),
+          arguments: [
+            new U64Value(betId)
+          ]
+        }
+      );
+
+      await signAndSendTransactions({
+        transactions: [transaction],
+        transactionsDisplayInfo: {
+          processingMessage: 'Closing bet...',
+          errorMessage: 'Failed to close bet',
+          successMessage: 'Bet closed successfully!'
+        }
+      });
+
+      // Refresh bets - wait longer for transaction to be processed
+      setTimeout(() => {
+        fetchBets();
+        fetchClosedBets();
+      }, 5000);
+      
+      // Also refresh again after a longer delay to ensure we get the updated state
+      setTimeout(() => {
+        fetchClosedBets();
+      }, 10000);
+    } catch (error) {
+      showError('Failed to close bet');
+    }
+  };
+
+  const handleOpenFinalizeModal = async (bet: Bet) => {
+    setBetToFinalize(bet);
+    setSelectedWinnerOutcome(null);
+    setLoadingFinalizeOutcomes(true);
+    setShowFinalizeModal(true);
+
+    // Load outcomes for this bet
+    const outcomeList: Outcome[] = [];
+    for (let i = 0; i < bet.num_outcomes; i++) {
+      try {
+        const text = await fetchOutcomeText(bet.bet_id, i);
+        const pool = await fetchOutcomePool(bet.bet_id, i);
+        outcomeList.push({ index: i, text, pool });
+      } catch (error) {
+        // Skip invalid outcomes
+      }
+    }
+    setFinalizeOutcomes(outcomeList);
+    setLoadingFinalizeOutcomes(false);
+  };
+
+  const handleFinalizeBet = async () => {
+    if (!betToFinalize || selectedWinnerOutcome === null || !address) {
+      showError('Please select a winner outcome');
+      return;
+    }
+
+    try {
+      const abi = AbiRegistry.create(aurorabetAbi);
+      const scFactory = new SmartContractTransactionsFactory({
+        config: new TransactionsFactoryConfig({
+          chainID: network.chainId
+        }),
+        abi
+      });
+
+      const contractAddress = Address.newFromBech32(AURORABET_CONTRACT);
+
+      const transaction = await scFactory.createTransactionForExecute(
+        new Address(address),
+        {
+          contract: contractAddress,
+          function: 'finalizeBet',
+          gasLimit: BigInt(5000000),
+          arguments: [
+            new U64Value(betToFinalize.bet_id),
+            new U8Value(selectedWinnerOutcome)
+          ]
+        }
+      );
+
+      await signAndSendTransactions({
+        transactions: [transaction],
+        transactionsDisplayInfo: {
+          processingMessage: 'Finalizing bet...',
+          errorMessage: 'Failed to finalize bet',
+          successMessage: 'Bet finalized successfully!'
+        }
+      });
+
+      setShowFinalizeModal(false);
+      setBetToFinalize(null);
+      setSelectedWinnerOutcome(null);
+
+      // Refresh bets
+      setTimeout(() => {
+        fetchBets();
+        fetchClosedBets();
+      }, 2000);
+    } catch (error) {
+      showError('Failed to finalize bet');
+    }
+  };
+
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-[400px]'>
@@ -743,27 +1114,197 @@ export default function BetPage() {
         </div>
       </div>
 
-      {bets.length === 0 ? (
-        <div className='text-center py-12'>
-          <p className='text-white/70 text-lg'>No open bets available</p>
+      {/* Tabs */}
+      <div className='flex gap-4 mb-6 border-b border-gray-700/50'>
+        <button
+          onClick={() => setActiveTab('bets')}
+          className={`pb-3 px-4 font-semibold transition-colors ${
+            activeTab === 'bets'
+              ? 'text-[#3EB489] border-b-2 border-[#3EB489]'
+              : 'text-white/60 hover:text-white'
+          }`}
+        >
+          Open Bets
+        </button>
+        {isWhitelisted && (
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`pb-3 px-4 font-semibold transition-colors ${
+              activeTab === 'admin'
+                ? 'text-[#3EB489] border-b-2 border-[#3EB489]'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            Admin
+          </button>
+        )}
+      </div>
+
+      {activeTab === 'bets' && (
+        <>
+          {bets.length === 0 ? (
+            <div className='text-center py-12'>
+              <p className='text-white/70 text-lg'>No open bets available</p>
+            </div>
+          ) : (
+            <div className='space-y-4'>
+              {bets.map((bet) => (
+                <BetCard
+                  key={bet.bet_id}
+                  bet={bet}
+                  userBet={userBets.get(bet.bet_id)}
+                  onBetClick={() => {
+                    setSelectedBet(bet);
+                    setShowBetModal(true);
+                  }}
+                  fetchOutcomeText={fetchOutcomeText}
+                  fetchOutcomePool={fetchOutcomePool}
+                  formatEGLD={formatEGLD}
+                  formatDate={formatDate}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'admin' && isWhitelisted && (
+        <div className='space-y-6'>
+          {/* Bets to Close */}
+          <div>
+            <h2 className='text-xl font-bold text-white mb-4'>Bets to Close</h2>
+            {loading ? (
+              <div className='text-white/70 text-sm py-4'>Loading...</div>
+            ) : betsToClose.length === 0 ? (
+              <div className='text-white/70 text-sm py-4'>No bets need to be closed</div>
+            ) : (
+              <div className='space-y-3'>
+                {betsToClose.map((bet) => (
+                  <div key={bet.bet_id} className='bg-gray-800/50 rounded-xl p-4 border border-gray-700/50'>
+                    <div className='flex justify-between items-start'>
+                      <div className='flex-1'>
+                        <h3 className='text-lg font-bold text-white mb-1'>{bet.title}</h3>
+                        <p className='text-white/70 text-sm mb-2'>{bet.question}</p>
+                        <p className='text-white/60 text-xs'>
+                          Closing Time: {formatDate(bet.closing_timestamp)} | Pool: {formatEGLD(bet.total_pool)} EGLD
+                        </p>
+                        <p className='text-red-400 text-xs mt-1'>
+                          ⏰ Past closing time - needs to be closed
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleCloseBet(bet.bet_id)}
+                        className='ml-4 px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90'
+                      >
+                        Close Bet
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bets to Finalize */}
+          <div>
+            <h2 className='text-xl font-bold text-white mb-4'>Bets to Finalize</h2>
+            {loadingClosedBets ? (
+              <div className='text-white/70 text-sm py-4'>Loading...</div>
+            ) : betsToFinalize.length === 0 ? (
+              <div className='text-white/70 text-sm py-4'>
+                No bets need to be finalized
+                {closedBets.length > 0 && (
+                  <div className='text-white/50 text-xs mt-2'>
+                    Debug: Found {closedBets.length} closed bet(s). 
+                    States: {closedBets.map(b => `ID ${b.bet_id}=${b.state}`).join(', ')}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='space-y-3'>
+                {betsToFinalize.map((bet) => (
+                  <div key={bet.bet_id} className='bg-gray-800/50 rounded-xl p-4 border border-gray-700/50'>
+                    <div className='flex justify-between items-start'>
+                      <div className='flex-1'>
+                        <h3 className='text-lg font-bold text-white mb-1'>{bet.title}</h3>
+                        <p className='text-white/70 text-sm mb-2'>{bet.question}</p>
+                        <p className='text-white/60 text-xs'>
+                          Pool: {formatEGLD(bet.total_pool)} EGLD
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleOpenFinalizeModal(bet)}
+                        className='ml-4 px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90'
+                      >
+                        Finalize Bet
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className='space-y-4'>
-          {bets.map((bet) => (
-            <BetCard
-              key={bet.bet_id}
-              bet={bet}
-              userBet={userBets.get(bet.bet_id)}
-              onBetClick={() => {
-                setSelectedBet(bet);
-                setShowBetModal(true);
-              }}
-              fetchOutcomeText={fetchOutcomeText}
-              fetchOutcomePool={fetchOutcomePool}
-              formatEGLD={formatEGLD}
-              formatDate={formatDate}
-            />
-          ))}
+      )}
+
+      {/* Finalize Bet Modal */}
+      {showFinalizeModal && betToFinalize && (
+        <div className='fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4'>
+          <div className='bg-gray-900 rounded-xl p-6 max-w-md w-full'>
+            <h2 className='text-2xl font-bold text-white mb-2'>Finalize Bet</h2>
+            <p className='text-white/70 text-sm mb-4'>{betToFinalize.title}</p>
+            <p className='text-white/60 text-xs mb-6'>{betToFinalize.question}</p>
+
+            <div className='space-y-4'>
+              <div>
+                <label className='block text-white/70 text-sm mb-2'>Select Winner Outcome</label>
+                {loadingFinalizeOutcomes ? (
+                  <div className='text-white/70 text-sm py-2'>Loading outcomes...</div>
+                ) : (
+                  <div className='space-y-2'>
+                    {finalizeOutcomes.map((outcome) => (
+                      <button
+                        key={outcome.index}
+                        onClick={() => setSelectedWinnerOutcome(outcome.index)}
+                        className={`w-full p-3 rounded-lg text-left transition-colors ${
+                          selectedWinnerOutcome === outcome.index
+                            ? 'bg-[#3EB489]/20 border-2 border-[#3EB489]'
+                            : 'bg-gray-800 border border-gray-700 hover:border-gray-600'
+                        }`}
+                      >
+                        <div className='flex justify-between items-center'>
+                          <span className='text-white'>{outcome.text}</span>
+                          <span className='text-white/70 text-sm'>
+                            Pool: {formatEGLD(outcome.pool)} EGLD
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className='flex gap-3 mt-6'>
+              <Button
+                onClick={() => {
+                  setShowFinalizeModal(false);
+                  setBetToFinalize(null);
+                  setSelectedWinnerOutcome(null);
+                }}
+                className='flex-1 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600'
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleFinalizeBet}
+                disabled={selectedWinnerOutcome === null}
+                className='flex-1 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+              >
+                Finalize
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -901,7 +1442,8 @@ function BetCard({
 
       <Button
         onClick={onBetClick}
-        className='w-full py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90'
+        disabled={bet.state === 1 || bet.state === 2 || bet.closing_timestamp <= Math.floor(Date.now() / 1000)}
+        className='w-full py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
       >
         {userBet ? 'Bet More' : 'Place Bet'}
       </Button>
