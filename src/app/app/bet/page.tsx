@@ -1018,27 +1018,37 @@ export default function BetPage() {
 
     try {
       const abi = AbiRegistry.create(aurorabetAbi);
-      const scFactory = new SmartContractTransactionsFactory({
-        config: new TransactionsFactoryConfig({
-          chainID: network.chainId
-        }),
-        abi
-      });
-
       const contractAddress = Address.newFromBech32(AURORABET_CONTRACT);
 
-      const transaction = await scFactory.createTransactionForExecute(
-        new Address(address),
-        {
-          contract: contractAddress,
-          function: 'finalizeBet',
-          gasLimit: BigInt(5000000),
-          arguments: [
-            new U64Value(betToFinalize.bet_id),
-            new U8Value(selectedWinnerOutcome)
-          ]
-        }
-      );
+      // Manually encode transaction data to ensure both arguments are included
+      const functionName = new ContractFunction('finalizeBet');
+      const args = [
+        new U64Value(betToFinalize.bet_id),
+        new U8Value(selectedWinnerOutcome)
+      ];
+
+      // Serialize arguments using ArgSerializer (same pattern as createBet)
+      const serializer = new ArgSerializer();
+      const serializedArgs = serializer.valuesToBuffers(args);
+      
+      // Build transaction data string: function@arg1hex@arg2hex@...
+      const dataParts: string[] = [functionName.toString()];
+      serializedArgs.forEach(buf => {
+        dataParts.push(buf.toString('hex'));
+      });
+      const dataString = dataParts.join('@');
+
+      // Create transaction with proper gas limit
+      const transaction = new Transaction({
+        chainID: network.chainId,
+        gasLimit: BigInt(10000000), // Increased gas limit
+        gasPrice: BigInt(GAS_PRICE),
+        receiver: contractAddress,
+        sender: new Address(address),
+        value: BigInt(0),
+        version: VERSION,
+        data: Uint8Array.from(Buffer.from(dataString, 'utf-8'))
+      });
 
       await signAndSendTransactions({
         transactions: [transaction],
