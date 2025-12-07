@@ -1811,12 +1811,32 @@ function BetCard({
     loadOutcomes();
   }, [bet.bet_id, bet.num_outcomes]);
 
-  // Calculate percentages for each outcome
-  const totalPoolNum = parseFloat(bet.total_pool) || 0;
-  const outcomePercentages = outcomes.map(outcome => {
-    const poolNum = parseFloat(outcome.pool) || 0;
-    return totalPoolNum > 0 ? (poolNum / totalPoolNum) * 100 : 0;
-  });
+  // Calculate percentages for each outcome using raw BigInt values for precision
+  // This includes dust bets (very small amounts) in the percentage calculation
+  // IMPORTANT: Calculate total pool from sum of all outcome pools to include dust bets
+  // The bet.total_pool might be rounded/formatted and exclude dust bets
+  const outcomePercentages = useMemo(() => {
+    if (outcomes.length === 0) {
+      return outcomes.map(() => 0);
+    }
+    // Sum all outcome pools to get the actual total (includes dust bets)
+    const totalPoolFromOutcomes = outcomes.reduce((sum, outcome) => {
+      return sum + BigInt(outcome.pool || '0');
+    }, BigInt(0));
+    
+    if (totalPoolFromOutcomes === BigInt(0)) {
+      return outcomes.map(() => 0);
+    }
+    
+    return outcomes.map(outcome => {
+      const poolBigInt = BigInt(outcome.pool || '0');
+      // Calculate percentage with high precision: (pool * 100000) / totalPool to get percentage with 3 decimals
+      // Then divide by 1000 to get the actual percentage with better precision
+      // This ensures dust bets are included in the calculation
+      const percentageBigInt = (poolBigInt * BigInt(100000)) / totalPoolFromOutcomes;
+      return Number(percentageBigInt) / 1000;
+    });
+  }, [outcomes]);
 
   // Color scheme for outcomes (teal and beige/cream)
   const outcomeColors = [
@@ -1887,7 +1907,7 @@ function BetCard({
                     idx === 3 ? 'text-[#C9A882]' : 
                     'text-[#5EC9A5]'
                   }`}>
-                    {percentage.toFixed(1)}%
+                    {percentage.toFixed(2)}%
                   </div>
                   {isSelected && (
                     <div className='text-[#3EB489] text-xs mt-1'>
@@ -2432,12 +2452,7 @@ function PlaceBetModal({
                         : 'bg-gray-800 border border-gray-700 hover:border-gray-600'
                     }`}
                   >
-                    <div className='flex justify-between items-center'>
-                      <span className='text-white'>{outcome.text}</span>
-                      <span className='text-white/70 text-sm'>
-                        Pool: {formatEGLD(outcome.pool)} EGLD
-                      </span>
-                    </div>
+                    <span className='text-white'>{outcome.text}</span>
                   </button>
                 ))}
               </div>
