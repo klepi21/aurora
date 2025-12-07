@@ -925,7 +925,7 @@ export default function BetPage() {
             });
           } else {
             // Track why bets aren't being added
-            const debugInfo = `Bet ${betId}: bet_id=${bet_id}, title="${title}", hasTitle=${!!betData.title}, betData keys: ${Object.keys(betData).join(', ')}`;
+            const debugInfo = `Bet ${betId}: bet_id=${bet_id}, title="${title}", hasTitle=${!!betDataAny.title}, betData keys: ${Object.keys(betData).join(', ')}`;
             setSettledBetsDebug(prev => prev ? `${prev}; ${debugInfo}` : debugInfo);
           }
         } catch (error) {
