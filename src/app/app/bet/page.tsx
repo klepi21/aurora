@@ -76,6 +76,8 @@ export default function BetPage() {
   const [activeTab, setActiveTab] = useState<'bets' | 'admin'>('bets');
   const [closedBets, setClosedBets] = useState<Bet[]>([]);
   const [loadingClosedBets, setLoadingClosedBets] = useState(false);
+  const [settledBets, setSettledBets] = useState<Bet[]>([]);
+  const [loadingSettledBets, setLoadingSettledBets] = useState(false);
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [betToFinalize, setBetToFinalize] = useState<Bet | null>(null);
   const [selectedWinnerOutcome, setSelectedWinnerOutcome] = useState<number | null>(null);
@@ -633,6 +635,318 @@ export default function BetPage() {
     }
   }, [network, address, showError]);
 
+  // Fetch settled bets for admin - use settledBetIds then getBetById for each
+  const fetchSettledBets = useCallback(async () => {
+    if (!network.apiAddress || !address) return;
+
+    const isWhitelisted = address.toLowerCase() === WHITELISTED_ADDRESS.toLowerCase();
+    if (!isWhitelisted) return;
+
+    setLoadingSettledBets(true);
+    setSettledBetsDebug(''); // Clear previous debug info
+    try {
+      const proxy = new ProxyNetworkProvider(network.apiAddress);
+      const abi = AbiRegistry.create(aurorabetAbi);
+      const contractAddress = Address.newFromBech32(AURORABET_CONTRACT);
+
+      const scController = new SmartContractController({
+        chainID: network.chainId,
+        networkProvider: proxy,
+        abi
+      });
+
+      // First, get settled bet IDs
+      const settledBetIdsResult = await scController.query({
+        contract: contractAddress,
+        function: 'settledBetIds',
+        arguments: []
+      });
+
+      let betIds: number[] = [];
+      
+      if (settledBetIdsResult) {
+        const resultValue = settledBetIdsResult.valueOf ? settledBetIdsResult.valueOf() : settledBetIdsResult;
+        if (Array.isArray(resultValue)) {
+          betIds = resultValue.flat().map(id => {
+            if (typeof id === 'number') return id;
+            if (id.toNumber && typeof id.toNumber === 'function') return id.toNumber();
+            return Number(id.toString());
+          });
+        } else if (typeof resultValue === 'object' && resultValue !== null) {
+          const keys = Object.keys(resultValue);
+          if (keys.length > 0) {
+            const firstKeyValue = (resultValue as any)[keys[0]];
+            if (Array.isArray(firstKeyValue)) {
+              betIds = firstKeyValue.flat().map(id => {
+                if (typeof id === 'number') return id;
+                if (id.toNumber && typeof id.toNumber === 'function') return id.toNumber();
+                return Number(id.toString());
+              });
+            } else {
+              betIds = Object.values(resultValue).flat().map(id => {
+                if (typeof id === 'number') return id;
+                if (id.toNumber && typeof id.toNumber === 'function') return id.toNumber();
+                return Number(id.toString());
+              });
+            }
+          }
+        }
+      }
+
+      // Filter out invalid IDs
+      betIds = betIds.filter(id => id > 0 && !isNaN(id));
+      setSettledBetIdsDebug(betIds); // Store for debugging
+
+      // Now fetch each bet by ID
+      const parsedBets: Bet[] = [];
+      
+      for (const betId of betIds) {
+        try {
+          const betResult = await scController.query({
+            contract: contractAddress,
+            function: 'getBetById',
+            arguments: [new U64Value(betId)]
+          });
+
+          if (!betResult) {
+            continue;
+          }
+
+          // Handle different response structures
+          let betData = betResult.valueOf ? betResult.valueOf() : betResult;
+          
+          // If betData is an array, take the first element (getBetById might return array)
+          if (Array.isArray(betData) && betData.length > 0) {
+            betData = betData[0];
+          }
+          
+          // If betData is wrapped in another object, try to unwrap it
+          if (betData && typeof betData === 'object' && !Array.isArray(betData)) {
+            // Check if it's a nested structure
+            if (betData.value && typeof betData.value === 'object') {
+              betData = betData.value;
+            }
+            // Check if it's wrapped in a result object
+            if (betData.result && typeof betData.result === 'object') {
+              betData = betData.result;
+            }
+          }
+          
+          if (!betData || typeof betData !== 'object') {
+            continue;
+          }
+
+          // Parse state FIRST to check if it's settled
+          let state = 0;
+          if (betData.state !== undefined && betData.state !== null) {
+            if (betData.state.discriminant !== undefined) {
+              state = Number(betData.state.discriminant);
+            } else if (typeof betData.state === 'number') {
+              state = betData.state;
+            } else {
+              state = Number(betData.state.toString() || 0);
+            }
+          }
+
+          // Since we got this ID from settledBetIds, it should be settled
+          // If state is not 2, force it to 2 since it's in settledBetIds
+          // The contract might have inconsistent state, but if it's in settledBetIds, it's settled
+          if (state !== 2) {
+            state = 2;
+          }
+
+          // Parse bet data (same parsing logic as fetchBets)
+          // Parse bet_id first
+          let bet_id = betId; // Use the ID we're fetching
+          if (betData.bet_id !== undefined && betData.bet_id !== null) {
+            if (typeof betData.bet_id === 'number') {
+              bet_id = betData.bet_id;
+            } else if (betData.bet_id.toNumber && typeof betData.bet_id.toNumber === 'function') {
+              bet_id = betData.bet_id.toNumber();
+            } else if (betData.bet_id.toString) {
+              bet_id = Number(betData.bet_id.toString());
+            } else {
+              bet_id = Number(betData.bet_id);
+            }
+          }
+
+          let title = '';
+          let question = '';
+          
+          // Enhanced title parsing - try multiple approaches
+          if (betData.title !== undefined && betData.title !== null) {
+            try {
+              if (betData.title instanceof Uint8Array || (betData.title.constructor && betData.title.constructor.name === 'Uint8Array')) {
+                title = Buffer.from(betData.title).toString('utf-8');
+              } else if (Array.isArray(betData.title)) {
+                // Handle array of numbers (bytes)
+                title = Buffer.from(betData.title).toString('utf-8');
+              } else if (betData.title.valueOf) {
+                // Try valueOf first
+                const titleValue = betData.title.valueOf();
+                if (titleValue instanceof Uint8Array || Array.isArray(titleValue)) {
+                  title = Buffer.from(titleValue).toString('utf-8');
+                } else {
+                  const str = titleValue.toString();
+                  if (str.startsWith('0x') || /^[0-9a-fA-F]+$/.test(str)) {
+                    title = Buffer.from(str.replace('0x', ''), 'hex').toString('utf-8');
+                  } else {
+                    title = str;
+                  }
+                }
+              } else {
+                const titleValue = betData.title.toString();
+                if (titleValue.startsWith('0x') || /^[0-9a-fA-F]+$/.test(titleValue)) {
+                  title = Buffer.from(titleValue.replace('0x', ''), 'hex').toString('utf-8');
+                } else {
+                  title = titleValue;
+                }
+              }
+            } catch (e) {
+              // If parsing fails, try direct string conversion
+              title = String(betData.title);
+            }
+          }
+          
+          // Enhanced question parsing - try multiple approaches
+          if (betData.question !== undefined && betData.question !== null) {
+            try {
+              if (betData.question instanceof Uint8Array || (betData.question.constructor && betData.question.constructor.name === 'Uint8Array')) {
+                question = Buffer.from(betData.question).toString('utf-8');
+              } else if (Array.isArray(betData.question)) {
+                question = Buffer.from(betData.question).toString('utf-8');
+              } else if (betData.question.valueOf) {
+                const questionValue = betData.question.valueOf();
+                if (questionValue instanceof Uint8Array || Array.isArray(questionValue)) {
+                  question = Buffer.from(questionValue).toString('utf-8');
+                } else {
+                  const str = questionValue.toString();
+                  if (str.startsWith('0x') || /^[0-9a-fA-F]+$/.test(str)) {
+                    question = Buffer.from(str.replace('0x', ''), 'hex').toString('utf-8');
+                  } else {
+                    question = str;
+                  }
+                }
+              } else {
+                const questionValue = betData.question.toString();
+                if (questionValue.startsWith('0x') || /^[0-9a-fA-F]+$/.test(questionValue)) {
+                  question = Buffer.from(questionValue.replace('0x', ''), 'hex').toString('utf-8');
+                } else {
+                  question = questionValue;
+                }
+              }
+            } catch (e) {
+              question = String(betData.question);
+            }
+          }
+
+          // State already parsed and checked above
+
+          let winner_outcome: number | null = null;
+          if (betData.winner_outcome !== undefined && betData.winner_outcome !== null) {
+            if (betData.winner_outcome.variant === 'None' || betData.winner_outcome.variant === 'none') {
+              winner_outcome = null;
+            } else if (betData.winner_outcome.variant === 'Some' || betData.winner_outcome.variant === 'some') {
+              const value = betData.winner_outcome.value !== undefined ? betData.winner_outcome.value : betData.winner_outcome;
+              winner_outcome = value !== undefined && value !== null ? Number(value) : null;
+            } else if (betData.winner_outcome.valueOf) {
+              const value = betData.winner_outcome.valueOf();
+              if (value !== undefined && value !== null && typeof value !== 'object') {
+                winner_outcome = Number(value);
+              } else {
+                winner_outcome = null;
+              }
+            } else if (typeof betData.winner_outcome === 'number') {
+              winner_outcome = betData.winner_outcome;
+            } else {
+              const parsed = Number(betData.winner_outcome);
+              winner_outcome = isNaN(parsed) ? null : parsed;
+            }
+          }
+
+          let num_outcomes = 0;
+          if (betData.num_outcomes !== undefined && betData.num_outcomes !== null) {
+            num_outcomes = typeof betData.num_outcomes === 'number' ? betData.num_outcomes : Number(betData.num_outcomes.toString());
+          }
+
+          let closing_timestamp = 0;
+          if (betData.closing_timestamp !== undefined && betData.closing_timestamp !== null) {
+            if (typeof betData.closing_timestamp === 'number') {
+              closing_timestamp = betData.closing_timestamp;
+            } else if (betData.closing_timestamp.toNumber && typeof betData.closing_timestamp.toNumber === 'function') {
+              closing_timestamp = betData.closing_timestamp.toNumber();
+            } else if (betData.closing_timestamp.toString) {
+              closing_timestamp = Number(betData.closing_timestamp.toString());
+            } else {
+              closing_timestamp = Number(betData.closing_timestamp);
+            }
+          }
+
+          let creator = '';
+          if (betData.creator) {
+            if (betData.creator.bech32) {
+              creator = betData.creator.bech32();
+            } else if (betData.creator.toString) {
+              creator = betData.creator.toString();
+            } else {
+              creator = String(betData.creator);
+            }
+          }
+
+          let general_pool = '0';
+          if (betData.general_pool !== undefined && betData.general_pool !== null) {
+            general_pool = betData.general_pool.toString ? betData.general_pool.toString() : String(betData.general_pool);
+          }
+
+          let total_pool = '0';
+          if (betData.total_pool !== undefined && betData.total_pool !== null) {
+            total_pool = betData.total_pool.toString ? betData.total_pool.toString() : String(betData.total_pool);
+          }
+
+          // Only push if we have valid bet_id (title can be empty for debugging)
+          if (bet_id > 0) {
+            // Use a fallback title if empty
+            const displayTitle = title || `Bet #${bet_id}`;
+            parsedBets.push({
+              bet_id,
+              title: displayTitle,
+              question,
+              num_outcomes,
+              creator,
+              closing_timestamp,
+              state,
+              general_pool,
+              total_pool,
+              winner_outcome
+            });
+          } else {
+            // Track why bets aren't being added
+            const debugInfo = `Bet ${betId}: bet_id=${bet_id}, title="${title}", hasTitle=${!!betData.title}, betData keys: ${Object.keys(betData).join(', ')}`;
+            setSettledBetsDebug(prev => prev ? `${prev}; ${debugInfo}` : debugInfo);
+          }
+        } catch (error) {
+          // Track errors
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          setSettledBetsDebug(prev => prev ? `${prev}; Error for bet ${betId}: ${errorMsg}` : `Error for bet ${betId}: ${errorMsg}`);
+        }
+      }
+
+      setSettledBets(parsedBets);
+      if (parsedBets.length === 0 && betIds.length > 0) {
+        // If we found IDs but no bets, show debug info
+        setSettledBetsDebug(prev => prev || `Found ${betIds.length} IDs but parsed 0 bets`);
+      }
+    } catch (error) {
+      showError('Failed to load settled bets');
+    } finally {
+      setLoadingSettledBets(false);
+    }
+  }, [network, address, showError]);
+
+  // Store betIds for debugging (using state)
+  const [settledBetIdsDebug, setSettledBetIdsDebug] = useState<number[]>([]);
+  const [settledBetsDebug, setSettledBetsDebug] = useState<string>('');
+
   // Fetch closed bets when admin tab is active
   useEffect(() => {
     if (activeTab === 'admin' && address) {
@@ -640,9 +954,10 @@ export default function BetPage() {
       if (isWhitelisted) {
         fetchBets(); // Refresh open bets to get latest data
         fetchClosedBets();
+        fetchSettledBets();
       }
     }
-  }, [activeTab, address, fetchClosedBets, fetchBets]);
+  }, [activeTab, address, fetchClosedBets, fetchBets, fetchSettledBets]);
 
   // Fetch open bets on mount
   useEffect(() => {
@@ -1010,6 +1325,56 @@ export default function BetPage() {
     setLoadingFinalizeOutcomes(false);
   };
 
+  const handleDeleteBet = async (betId: number) => {
+    if (!address) return;
+
+    if (!confirm('Are you sure you want to delete this bet? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const abi = AbiRegistry.create(aurorabetAbi);
+      const scFactory = new SmartContractTransactionsFactory({
+        config: new TransactionsFactoryConfig({
+          chainID: network.chainId
+        }),
+        abi
+      });
+
+      const contractAddress = Address.newFromBech32(AURORABET_CONTRACT);
+
+      const transaction = await scFactory.createTransactionForExecute(
+        new Address(address),
+        {
+          contract: contractAddress,
+          function: 'deleteBet',
+          gasLimit: BigInt(5000000),
+          arguments: [
+            new U64Value(betId)
+          ]
+        }
+      );
+
+      await signAndSendTransactions({
+        transactions: [transaction],
+        transactionsDisplayInfo: {
+          processingMessage: 'Deleting bet...',
+          errorMessage: 'Failed to delete bet',
+          successMessage: 'Bet deleted successfully!'
+        }
+      });
+
+      // Refresh bets
+      setTimeout(() => {
+        fetchBets();
+        fetchClosedBets();
+        fetchSettledBets();
+      }, 2000);
+    } catch (error) {
+      showError('Failed to delete bet');
+    }
+  };
+
   const handleFinalizeBet = async () => {
     if (!betToFinalize || selectedWinnerOutcome === null || !address) {
       showError('Please select a winner outcome');
@@ -1067,6 +1432,7 @@ export default function BetPage() {
       setTimeout(() => {
         fetchBets();
         fetchClosedBets();
+        fetchSettledBets();
       }, 2000);
     } catch (error) {
       showError('Failed to finalize bet');
@@ -1254,6 +1620,40 @@ export default function BetPage() {
               </div>
             )}
           </div>
+
+          {/* Finalized Bets */}
+          <div>
+            <h2 className='text-xl font-bold text-white mb-4'>Finalized Bets</h2>
+            {loadingSettledBets ? (
+              <div className='text-white/70 text-sm py-4'>Loading...</div>
+            ) : settledBets.length === 0 ? (
+              <div className='text-white/70 text-sm py-4'>
+                No finalized bets
+                {settledBetIdsDebug.length > 0 && (
+                  <div className='text-white/50 text-xs mt-2'>
+                    Debug: Found {settledBetIdsDebug.length} settled bet ID(s): {settledBetIdsDebug.join(', ')}
+                    {settledBetsDebug && (
+                      <div className='mt-1 text-red-400 break-words'>
+                        {settledBetsDebug}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='space-y-3'>
+                {settledBets.map((bet) => (
+                  <SettledBetCard
+                    key={bet.bet_id}
+                    bet={bet}
+                    onDelete={() => handleDeleteBet(bet.bet_id)}
+                    fetchOutcomeText={fetchOutcomeText}
+                    formatEGLD={formatEGLD}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1407,53 +1807,122 @@ function BetCard({
     loadOutcomes();
   }, [bet.bet_id, bet.num_outcomes]);
 
+  // Calculate percentages for each outcome
+  const totalPoolNum = parseFloat(bet.total_pool) || 0;
+  const outcomePercentages = outcomes.map(outcome => {
+    const poolNum = parseFloat(outcome.pool) || 0;
+    return totalPoolNum > 0 ? (poolNum / totalPoolNum) * 100 : 0;
+  });
+
+  // Color scheme for outcomes (teal and beige/cream)
+  const outcomeColors = [
+    'bg-[#3EB489]', // Teal
+    'bg-[#D4A574]', // Beige/Cream
+    'bg-[#8ED6C1]', // Light teal
+    'bg-[#C9A882]', // Light beige
+    'bg-[#5EC9A5]', // Medium teal
+  ];
+
   return (
-    <div className='bg-gray-800/50 rounded-xl p-4 border border-gray-700/50'>
+    <div className='bg-gray-800/50 rounded-xl p-5 border border-gray-700/50 hover:border-[#3EB489]/50 transition-colors'>
+      {/* Title Badge */}
       <div className='mb-3'>
-        <h3 className='text-xl font-bold text-white mb-1'>{bet.title}</h3>
-        <p className='text-white/70 text-sm'>{bet.question}</p>
+        <span className='inline-block px-3 py-1 bg-[#3EB489]/20 text-[#3EB489] text-xs font-medium rounded-full border border-[#3EB489]/30'>
+          {bet.title}
+        </span>
       </div>
 
-      <div className='mb-3'>
-        <BetCountdown closingTimestamp={bet.closing_timestamp} />
-        <p className='text-white/60 text-xs mt-2'>
-          Total Pool: {formatEGLD(bet.total_pool)} EGLD
-        </p>
-      </div>
+      {/* Question */}
+      <h3 className='text-lg font-bold text-white mb-4 leading-tight'>
+        {bet.question}
+      </h3>
 
       {loadingOutcomes ? (
-        <div className='text-white/70 text-sm py-2'>Loading outcomes...</div>
-      ) : (
-        <div className='space-y-2 mb-4'>
-          {outcomes.map((outcome) => (
-            <div
-              key={outcome.index}
-              className={`p-2 rounded-lg ${
-                userBet?.outcome_index === outcome.index
-                  ? 'bg-[#3EB489]/20 border border-[#3EB489]'
-                  : 'bg-gray-700/30'
-              }`}
-            >
-              <div className='flex justify-between items-center'>
-                <span className='text-white text-sm'>{outcome.text}</span>
-                <span className='text-white/70 text-xs'>
-                  {formatEGLD(outcome.pool)} EGLD
-                </span>
-              </div>
-              {userBet && userBet.outcome_index === outcome.index && (
-                <p className='text-[#3EB489] text-xs mt-1'>
-                  Your bet: {formatEGLD(userBet.amount)} EGLD
-                </p>
-              )}
+        <div className='text-white/70 text-sm py-4 text-center'>Loading outcomes...</div>
+      ) : outcomes.length > 0 ? (
+        <>
+          {/* Progress Bar */}
+          <div className='mb-4'>
+            <div className='h-2 bg-gray-700/50 rounded-full overflow-hidden flex'>
+              {outcomes.map((outcome, idx) => {
+                const percentage = outcomePercentages[idx] || 0;
+                return (
+                  <div
+                    key={outcome.index}
+                    className={`${outcomeColors[idx % outcomeColors.length]} transition-all duration-300`}
+                    style={{ width: `${percentage}%` }}
+                  />
+                );
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
 
+          {/* Outcomes Grid */}
+          <div className={`grid gap-3 mb-4 ${outcomes.length === 2 ? 'grid-cols-2' : outcomes.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            {outcomes.map((outcome, idx) => {
+              const percentage = outcomePercentages[idx] || 0;
+              const colorClass = outcomeColors[idx % outcomeColors.length];
+              const isSelected = userBet?.outcome_index === outcome.index;
+              
+              return (
+                <div
+                  key={outcome.index}
+                  className={`p-3 rounded-lg border-2 transition-all flex flex-col min-h-[80px] ${
+                    isSelected
+                      ? 'border-[#3EB489] bg-[#3EB489]/10'
+                      : 'border-gray-700/50 bg-gray-800/30'
+                  }`}
+                >
+                  <div className='text-white font-semibold text-sm mb-auto'>
+                    {outcome.text}
+                  </div>
+                  <div className={`text-sm font-bold mt-auto ${
+                    idx === 0 ? 'text-[#3EB489]' : 
+                    idx === 1 ? 'text-[#D4A574]' : 
+                    idx === 2 ? 'text-[#8ED6C1]' : 
+                    idx === 3 ? 'text-[#C9A882]' : 
+                    'text-[#5EC9A5]'
+                  }`}>
+                    {percentage.toFixed(1)}%
+                  </div>
+                  {isSelected && (
+                    <div className='text-[#3EB489] text-xs mt-1'>
+                      Your bet: {formatEGLD(userBet.amount)} EGLD
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+
+      {/* Bottom Info Bar */}
+      <div className='flex justify-between items-center pt-4 border-t border-gray-700/50'>
+        {/* Total Pool - Left */}
+        <div className='flex items-center gap-2'>
+          <svg className='w-4 h-4 text-[#3EB489]' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' />
+          </svg>
+          <span className='text-white/70 text-sm'>
+            {formatEGLD(bet.total_pool)} EGLD
+          </span>
+        </div>
+
+        {/* Closing Time - Right */}
+        <div className='flex items-center gap-2'>
+          <svg className='w-4 h-4 text-white/50' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' />
+          </svg>
+          <BetCountdown closingTimestamp={bet.closing_timestamp} />
+        </div>
+      </div>
+
+      {/* Place Bet Button */}
       <Button
         onClick={onBetClick}
         disabled={bet.state === 1 || bet.state === 2 || bet.closing_timestamp <= Math.floor(Date.now() / 1000)}
-        className='w-full py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+        className='w-full mt-4 py-2.5 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold'
       >
         {userBet ? 'Bet More' : 'Place Bet'}
       </Button>
@@ -1461,8 +1930,8 @@ function BetCard({
   );
 }
 
-function BetCountdown({ closingTimestamp }: { closingTimestamp: number }) {
-  const [timeRemaining, setTimeRemaining] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+function BetCountdown({ closingTimestamp, compact }: { closingTimestamp: number; compact?: boolean }) {
+  const [timeRemaining, setTimeRemaining] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -1470,14 +1939,15 @@ function BetCountdown({ closingTimestamp }: { closingTimestamp: number }) {
       const remaining = closingTimestamp - now;
 
       if (remaining <= 0) {
-        setTimeRemaining({ hours: 0, minutes: 0, seconds: 0 });
+        setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
 
-      const hours = Math.floor(remaining / 3600);
+      const days = Math.floor(remaining / 86400);
+      const hours = Math.floor((remaining % 86400) / 3600);
       const minutes = Math.floor((remaining % 3600) / 60);
       const seconds = remaining % 60;
-      setTimeRemaining({ hours, minutes, seconds });
+      setTimeRemaining({ days, hours, minutes, seconds });
     };
 
     // Calculate immediately
@@ -1491,29 +1961,47 @@ function BetCountdown({ closingTimestamp }: { closingTimestamp: number }) {
 
   if (timeRemaining === null) {
     return (
-      <p className='text-white/60 text-xs mb-2'>
-        Bet Closes in: Calculating...
-      </p>
+      <span className='text-white/50 text-sm'>Calculating...</span>
     );
   }
 
-  if (timeRemaining.hours === 0 && timeRemaining.minutes === 0 && timeRemaining.seconds === 0) {
+  if (timeRemaining.days === 0 && timeRemaining.hours === 0 && timeRemaining.minutes === 0 && timeRemaining.seconds === 0) {
     return (
-      <p className='text-red-400 text-xs mb-2 font-semibold'>
-        ⏰ Bet Closed
-      </p>
+      <span className='text-red-400 text-sm font-semibold'>
+        ⏰ Closed
+      </span>
     );
   }
 
-  return (
-    <div className='flex items-center gap-2 mb-2'>
-      <span className='text-white/60 text-xs'>Bet Closes in:</span>
-      <div className='flex items-center gap-1 bg-[#3EB489]/20 border border-[#3EB489]/50 rounded-lg px-2 py-1'>
-        <span className='text-[#3EB489] text-sm font-bold'>
-          {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
+  if (compact) {
+    // Compact format: "in X days" or "in Xh Ym"
+    if (timeRemaining.days > 0) {
+      return (
+        <span className='text-white/50 text-sm'>
+          in {timeRemaining.days} {timeRemaining.days === 1 ? 'day' : 'days'}
         </span>
-      </div>
-    </div>
+      );
+    } else if (timeRemaining.hours > 0) {
+      return (
+        <span className='text-white/50 text-sm'>
+          in {timeRemaining.hours}h {timeRemaining.minutes}m
+        </span>
+      );
+    } else {
+      return (
+        <span className='text-white/50 text-sm'>
+          in {timeRemaining.minutes}m {timeRemaining.seconds}s
+        </span>
+      );
+    }
+  }
+
+  // Full countdown format for bottom bar - same style as before
+  return (
+    <span className='text-white/50 text-sm'>
+      {timeRemaining.days > 0 && `${timeRemaining.days}d `}
+      {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
+    </span>
   );
 }
 
@@ -1981,6 +2469,57 @@ function PlaceBetModal({
             Place Bet
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SettledBetCard({
+  bet,
+  onDelete,
+  fetchOutcomeText,
+  formatEGLD
+}: {
+  bet: Bet;
+  onDelete: () => void;
+  fetchOutcomeText: (betId: number, outcomeIndex: number) => Promise<string>;
+  formatEGLD: (amount: string) => string;
+}) {
+  const [winnerText, setWinnerText] = useState<string>('');
+
+  useEffect(() => {
+    const loadWinnerText = async () => {
+      if (bet.winner_outcome !== null && bet.winner_outcome !== undefined) {
+        try {
+          const text = await fetchOutcomeText(bet.bet_id, bet.winner_outcome);
+          setWinnerText(text);
+        } catch (error) {
+          setWinnerText(`Outcome ${bet.winner_outcome + 1}`);
+        }
+      }
+    };
+    loadWinnerText();
+  }, [bet.bet_id, bet.winner_outcome, fetchOutcomeText]);
+
+  return (
+    <div className='bg-gray-800/50 rounded-xl p-4 border border-gray-700/50'>
+      <div className='flex justify-between items-start'>
+        <div className='flex-1'>
+          <h3 className='text-lg font-bold text-white mb-1'>{bet.title}</h3>
+          <p className='text-white/70 text-sm mb-2'>{bet.question}</p>
+          <p className='text-white/60 text-xs'>
+            Pool: {formatEGLD(bet.total_pool)} EGLD
+            {bet.winner_outcome !== null && bet.winner_outcome !== undefined && (
+              <> | Winner: {winnerText || `Outcome ${bet.winner_outcome + 1}`}</>
+            )}
+          </p>
+        </div>
+        <Button
+          onClick={onDelete}
+          className='ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors'
+        >
+          Delete
+        </Button>
       </div>
     </div>
   );
