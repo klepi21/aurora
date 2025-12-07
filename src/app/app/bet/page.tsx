@@ -738,13 +738,14 @@ export default function BetPage() {
 
           // Parse state FIRST to check if it's settled
           let state = 0;
-          if (betData.state !== undefined && betData.state !== null) {
-            if (betData.state.discriminant !== undefined) {
-              state = Number(betData.state.discriminant);
-            } else if (typeof betData.state === 'number') {
-              state = betData.state;
+          if ('state' in betData && betData.state !== undefined && betData.state !== null) {
+            const stateValue = (betData as any).state;
+            if (stateValue && typeof stateValue === 'object' && 'discriminant' in stateValue) {
+              state = Number(stateValue.discriminant);
+            } else if (typeof stateValue === 'number') {
+              state = stateValue;
             } else {
-              state = Number(betData.state.toString() || 0);
+              state = Number(stateValue.toString() || 0);
             }
           }
 
@@ -755,18 +756,21 @@ export default function BetPage() {
             state = 2;
           }
 
+          // Use type assertion to avoid TypeScript errors
+          const betDataAny = betData as any;
+
           // Parse bet data (same parsing logic as fetchBets)
           // Parse bet_id first
           let bet_id = betId; // Use the ID we're fetching
-          if (betData.bet_id !== undefined && betData.bet_id !== null) {
-            if (typeof betData.bet_id === 'number') {
-              bet_id = betData.bet_id;
-            } else if (betData.bet_id.toNumber && typeof betData.bet_id.toNumber === 'function') {
-              bet_id = betData.bet_id.toNumber();
-            } else if (betData.bet_id.toString) {
-              bet_id = Number(betData.bet_id.toString());
+          if (betDataAny.bet_id !== undefined && betDataAny.bet_id !== null) {
+            if (typeof betDataAny.bet_id === 'number') {
+              bet_id = betDataAny.bet_id;
+            } else if (betDataAny.bet_id.toNumber && typeof betDataAny.bet_id.toNumber === 'function') {
+              bet_id = betDataAny.bet_id.toNumber();
+            } else if (betDataAny.bet_id.toString) {
+              bet_id = Number(betDataAny.bet_id.toString());
             } else {
-              bet_id = Number(betData.bet_id);
+              bet_id = Number(betDataAny.bet_id);
             }
           }
 
@@ -774,16 +778,16 @@ export default function BetPage() {
           let question = '';
           
           // Enhanced title parsing - try multiple approaches
-          if (betData.title !== undefined && betData.title !== null) {
+          if (betDataAny.title !== undefined && betDataAny.title !== null) {
             try {
-              if (betData.title instanceof Uint8Array || (betData.title.constructor && betData.title.constructor.name === 'Uint8Array')) {
-                title = Buffer.from(betData.title).toString('utf-8');
-              } else if (Array.isArray(betData.title)) {
+              if (betDataAny.title instanceof Uint8Array || (betDataAny.title.constructor && betDataAny.title.constructor.name === 'Uint8Array')) {
+                title = Buffer.from(betDataAny.title).toString('utf-8');
+              } else if (Array.isArray(betDataAny.title)) {
                 // Handle array of numbers (bytes)
-                title = Buffer.from(betData.title).toString('utf-8');
-              } else if (betData.title.valueOf) {
+                title = Buffer.from(betDataAny.title).toString('utf-8');
+              } else if (betDataAny.title.valueOf) {
                 // Try valueOf first
-                const titleValue = betData.title.valueOf();
+                const titleValue = betDataAny.title.valueOf();
                 if (titleValue instanceof Uint8Array || Array.isArray(titleValue)) {
                   title = Buffer.from(titleValue).toString('utf-8');
                 } else {
@@ -795,7 +799,7 @@ export default function BetPage() {
                   }
                 }
               } else {
-                const titleValue = betData.title.toString();
+                const titleValue = betDataAny.title.toString();
                 if (titleValue.startsWith('0x') || /^[0-9a-fA-F]+$/.test(titleValue)) {
                   title = Buffer.from(titleValue.replace('0x', ''), 'hex').toString('utf-8');
                 } else {
@@ -804,19 +808,19 @@ export default function BetPage() {
               }
             } catch (e) {
               // If parsing fails, try direct string conversion
-              title = String(betData.title);
+              title = String(betDataAny.title);
             }
           }
           
           // Enhanced question parsing - try multiple approaches
-          if (betData.question !== undefined && betData.question !== null) {
+          if (betDataAny.question !== undefined && betDataAny.question !== null) {
             try {
-              if (betData.question instanceof Uint8Array || (betData.question.constructor && betData.question.constructor.name === 'Uint8Array')) {
-                question = Buffer.from(betData.question).toString('utf-8');
-              } else if (Array.isArray(betData.question)) {
-                question = Buffer.from(betData.question).toString('utf-8');
-              } else if (betData.question.valueOf) {
-                const questionValue = betData.question.valueOf();
+              if (betDataAny.question instanceof Uint8Array || (betDataAny.question.constructor && betDataAny.question.constructor.name === 'Uint8Array')) {
+                question = Buffer.from(betDataAny.question).toString('utf-8');
+              } else if (Array.isArray(betDataAny.question)) {
+                question = Buffer.from(betDataAny.question).toString('utf-8');
+              } else if (betDataAny.question.valueOf) {
+                const questionValue = betDataAny.question.valueOf();
                 if (questionValue instanceof Uint8Array || Array.isArray(questionValue)) {
                   question = Buffer.from(questionValue).toString('utf-8');
                 } else {
@@ -828,7 +832,7 @@ export default function BetPage() {
                   }
                 }
               } else {
-                const questionValue = betData.question.toString();
+                const questionValue = betDataAny.question.toString();
                 if (questionValue.startsWith('0x') || /^[0-9a-fA-F]+$/.test(questionValue)) {
                   question = Buffer.from(questionValue.replace('0x', ''), 'hex').toString('utf-8');
                 } else {
@@ -836,71 +840,71 @@ export default function BetPage() {
                 }
               }
             } catch (e) {
-              question = String(betData.question);
+              question = String(betDataAny.question);
             }
           }
 
           // State already parsed and checked above
 
           let winner_outcome: number | null = null;
-          if (betData.winner_outcome !== undefined && betData.winner_outcome !== null) {
-            if (betData.winner_outcome.variant === 'None' || betData.winner_outcome.variant === 'none') {
+          if (betDataAny.winner_outcome !== undefined && betDataAny.winner_outcome !== null) {
+            if (betDataAny.winner_outcome.variant === 'None' || betDataAny.winner_outcome.variant === 'none') {
               winner_outcome = null;
-            } else if (betData.winner_outcome.variant === 'Some' || betData.winner_outcome.variant === 'some') {
-              const value = betData.winner_outcome.value !== undefined ? betData.winner_outcome.value : betData.winner_outcome;
+            } else if (betDataAny.winner_outcome.variant === 'Some' || betDataAny.winner_outcome.variant === 'some') {
+              const value = betDataAny.winner_outcome.value !== undefined ? betDataAny.winner_outcome.value : betDataAny.winner_outcome;
               winner_outcome = value !== undefined && value !== null ? Number(value) : null;
-            } else if (betData.winner_outcome.valueOf) {
-              const value = betData.winner_outcome.valueOf();
+            } else if (betDataAny.winner_outcome.valueOf) {
+              const value = betDataAny.winner_outcome.valueOf();
               if (value !== undefined && value !== null && typeof value !== 'object') {
                 winner_outcome = Number(value);
               } else {
                 winner_outcome = null;
               }
-            } else if (typeof betData.winner_outcome === 'number') {
-              winner_outcome = betData.winner_outcome;
+            } else if (typeof betDataAny.winner_outcome === 'number') {
+              winner_outcome = betDataAny.winner_outcome;
             } else {
-              const parsed = Number(betData.winner_outcome);
+              const parsed = Number(betDataAny.winner_outcome);
               winner_outcome = isNaN(parsed) ? null : parsed;
             }
           }
 
           let num_outcomes = 0;
-          if (betData.num_outcomes !== undefined && betData.num_outcomes !== null) {
-            num_outcomes = typeof betData.num_outcomes === 'number' ? betData.num_outcomes : Number(betData.num_outcomes.toString());
+          if (betDataAny.num_outcomes !== undefined && betDataAny.num_outcomes !== null) {
+            num_outcomes = typeof betDataAny.num_outcomes === 'number' ? betDataAny.num_outcomes : Number(betDataAny.num_outcomes.toString());
           }
 
           let closing_timestamp = 0;
-          if (betData.closing_timestamp !== undefined && betData.closing_timestamp !== null) {
-            if (typeof betData.closing_timestamp === 'number') {
-              closing_timestamp = betData.closing_timestamp;
-            } else if (betData.closing_timestamp.toNumber && typeof betData.closing_timestamp.toNumber === 'function') {
-              closing_timestamp = betData.closing_timestamp.toNumber();
-            } else if (betData.closing_timestamp.toString) {
-              closing_timestamp = Number(betData.closing_timestamp.toString());
+          if (betDataAny.closing_timestamp !== undefined && betDataAny.closing_timestamp !== null) {
+            if (typeof betDataAny.closing_timestamp === 'number') {
+              closing_timestamp = betDataAny.closing_timestamp;
+            } else if (betDataAny.closing_timestamp.toNumber && typeof betDataAny.closing_timestamp.toNumber === 'function') {
+              closing_timestamp = betDataAny.closing_timestamp.toNumber();
+            } else if (betDataAny.closing_timestamp.toString) {
+              closing_timestamp = Number(betDataAny.closing_timestamp.toString());
             } else {
-              closing_timestamp = Number(betData.closing_timestamp);
+              closing_timestamp = Number(betDataAny.closing_timestamp);
             }
           }
 
           let creator = '';
-          if (betData.creator) {
-            if (betData.creator.bech32) {
-              creator = betData.creator.bech32();
-            } else if (betData.creator.toString) {
-              creator = betData.creator.toString();
+          if (betDataAny.creator) {
+            if (betDataAny.creator.bech32) {
+              creator = betDataAny.creator.bech32();
+            } else if (betDataAny.creator.toString) {
+              creator = betDataAny.creator.toString();
             } else {
-              creator = String(betData.creator);
+              creator = String(betDataAny.creator);
             }
           }
 
           let general_pool = '0';
-          if (betData.general_pool !== undefined && betData.general_pool !== null) {
-            general_pool = betData.general_pool.toString ? betData.general_pool.toString() : String(betData.general_pool);
+          if (betDataAny.general_pool !== undefined && betDataAny.general_pool !== null) {
+            general_pool = betDataAny.general_pool.toString ? betDataAny.general_pool.toString() : String(betDataAny.general_pool);
           }
 
           let total_pool = '0';
-          if (betData.total_pool !== undefined && betData.total_pool !== null) {
-            total_pool = betData.total_pool.toString ? betData.total_pool.toString() : String(betData.total_pool);
+          if (betDataAny.total_pool !== undefined && betDataAny.total_pool !== null) {
+            total_pool = betDataAny.total_pool.toString ? betDataAny.total_pool.toString() : String(betDataAny.total_pool);
           }
 
           // Only push if we have valid bet_id (title can be empty for debugging)
