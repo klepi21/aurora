@@ -723,12 +723,12 @@ export default function BetPage() {
           // If betData is wrapped in another object, try to unwrap it
           if (betData && typeof betData === 'object' && !Array.isArray(betData)) {
             // Check if it's a nested structure
-            if (betData.value && typeof betData.value === 'object') {
-              betData = betData.value;
+            if ('value' in betData && typeof (betData as any).value === 'object') {
+              betData = (betData as any).value;
             }
             // Check if it's wrapped in a result object
-            if (betData.result && typeof betData.result === 'object') {
-              betData = betData.result;
+            if ('result' in betData && typeof (betData as any).result === 'object') {
+              betData = (betData as any).result;
             }
           }
           
