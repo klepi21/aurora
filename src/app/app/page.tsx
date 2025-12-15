@@ -698,7 +698,7 @@ export default function App() {
                     <div className='flex-1 min-w-0'>
                       <p className='text-xs font-medium text-gray-400 uppercase tracking-wider mb-1'>Referred By</p>
                       <p className='text-sm font-semibold text-[#3EB489] truncate'>
-                        {referredBy.team_name || formatAddress(referredBy.wallet_address)}
+                        {referredBy.team_name || 'Unnamed Team'}
                       </p>
                     </div>
                   </div>
