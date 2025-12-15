@@ -49,6 +49,11 @@ export default function App() {
     editTeamName: string;
     egldPrice: number;
   } | null>(null);
+  const [referralLink, setReferralLink] = useState<string>('');
+  const [refpoints, setRefpoints] = useState<number>(0);
+  const [referralCount, setReferralCount] = useState<number>(0);
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [referredBy, setReferredBy] = useState<{ wallet_address: string; team_name: string | null } | null>(null);
   const pendingTransactions = useGetPendingTransactions();
 
   // Fetch dynamic costs on mount
@@ -74,6 +79,69 @@ export default function App() {
     loadCosts();
   }, []);
 
+  // Initialize user with referral code from URL when wallet connects
+  useEffect(() => {
+    const initializeUser = async () => {
+      if (!address) return;
+
+      // Check for referral code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+
+      try {
+        // Initialize user with referral code if present
+        const initResponse = await fetch('/api/users/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet_address: address,
+            referral_code: refCode || null
+          })
+        });
+
+        const initResult = await initResponse.json();
+        if (initResult.success && initResult.referred) {
+          success('Welcome! You joined via a referral link! 🎉', 5000);
+        }
+
+        // Remove ref parameter from URL after processing
+        if (refCode) {
+          urlParams.delete('ref');
+          const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+          window.history.replaceState({}, '', newUrl);
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error);
+      }
+    };
+
+    initializeUser();
+  }, [address, success]);
+
+  // Load referral data
+  useEffect(() => {
+    const loadReferralData = async () => {
+      if (!address) return;
+
+      try {
+        const response = await fetch(`/api/referrals?wallet_address=${address}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setReferralLink(result.data.referral_link || '');
+          setRefpoints(result.data.refpoints || 0);
+          setReferralCount(result.data.referral_count || 0);
+          setReferralCode(result.data.referral_code || '');
+          setReferredBy(result.data.referred_by || null);
+        }
+      } catch (error) {
+        console.error('Error loading referral data:', error);
+      }
+    };
+
+    loadReferralData();
+  }, [address]);
+
   // Reset team name when address changes (user connects/disconnects)
   useEffect(() => {
     setTeamName('');
@@ -83,6 +151,11 @@ export default function App() {
     setTeamRanking(null);
     setTeamPoints(0);
     setIsEditingTeamName(false);
+    setReferralLink('');
+    setRefpoints(0);
+    setReferralCount(0);
+    setReferralCode('');
+    setReferredBy(null);
   }, [address]);
 
   // Load team name, ranking, and points from database
@@ -352,9 +425,10 @@ export default function App() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
+      success('Copied to clipboard!', 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+      showError('Failed to copy to clipboard', 2000);
     }
   };
 
@@ -575,6 +649,111 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* Referral Section */}
+      {address && (
+        <div className='relative bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-6 shadow-2xl border border-gray-800/50 overflow-hidden'>
+          <div className='relative flex flex-col gap-4 z-10'>
+            <div className='flex items-center justify-between'>
+              <p className='text-xs font-medium text-gray-400 uppercase tracking-wider'>Referral Program</p>
+              <div className='flex items-center gap-2 px-3 py-1.5 bg-[#3EB489]/20 rounded-lg border border-[#3EB489]/30'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth={2}
+                  stroke='#3EB489'
+                  className='w-4 h-4'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                  />
+                </svg>
+                <span className='text-sm font-bold text-[#3EB489]'>{refpoints}</span>
+                <span className='text-xs text-gray-400'>refpoints</span>
+              </div>
+            </div>
+
+            <div className='flex flex-col gap-3'>
+              {/* Show who referred this user */}
+              {referredBy && (
+                <div className='px-4 py-3 bg-[#3EB489]/10 border border-[#3EB489]/30 rounded-xl'>
+                  <div className='flex items-center gap-2'>
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      strokeWidth={2}
+                      stroke='#3EB489'
+                      className='w-5 h-5 flex-shrink-0'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        d='M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z'
+                      />
+                    </svg>
+                    <div className='flex-1 min-w-0'>
+                      <p className='text-xs font-medium text-gray-400 uppercase tracking-wider mb-1'>Referred By</p>
+                      <p className='text-sm font-semibold text-[#3EB489] truncate'>
+                        {referredBy.team_name || formatAddress(referredBy.wallet_address)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className='text-sm text-gray-400 mb-2'>Invite friends and earn 1 refpoint for each friend who connects their wallet!</p>
+                <div className='flex flex-col gap-2'>
+                  <div className='flex items-center gap-2 px-4 py-3 bg-gray-800/50 border border-gray-700/50 rounded-xl'>
+                    <input
+                      type='text'
+                      value={referralLink}
+                      readOnly
+                      className='flex-1 bg-transparent text-white text-sm font-mono truncate focus:outline-none'
+                    />
+                    <button
+                      onClick={() => copyToClipboard(referralLink)}
+                      disabled={!referralLink}
+                      className='p-2 hover:bg-[#3EB489]/20 rounded-lg transition-all active:scale-95 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed'
+                      title='Copy referral link'
+                    >
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        strokeWidth={2}
+                        stroke='#3EB489'
+                        className='w-5 h-5'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          d='M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184'
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className='grid grid-cols-2 gap-4 pt-2 border-t border-gray-800/50'>
+                <div className='flex flex-col gap-1'>
+                  <p className='text-[10px] font-medium text-gray-400 uppercase tracking-wider'>Referrals</p>
+                  <p className='text-lg font-bold text-white'>{referralCount}</p>
+                </div>
+                <div className='flex flex-col gap-1'>
+                  <p className='text-[10px] font-medium text-gray-400 uppercase tracking-wider'>Refpoints</p>
+                  <p className='text-lg font-bold text-[#3EB489]'>{refpoints}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Divider with Football Icon */}
       <div className='relative my-2'>

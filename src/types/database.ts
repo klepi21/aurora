@@ -5,6 +5,9 @@ export interface User {
   total_points: number;
   created_at: string;
   updated_at: string;
+  referral_code: string | null;
+  referred_by: string | null;
+  refpoints: number;
 }
 
 export interface UserTeam {

@@ -314,22 +314,22 @@ export default function LeaderboardPage() {
           onClick={() => setSelectedTeam(null)}
         >
           <div
-            className='relative max-w-2xl w-full bg-gradient-to-br from-gray-900/95 to-black rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl flex flex-col'
+            className='relative max-w-lg md:max-w-md w-full max-h-[90vh] bg-gradient-to-br from-gray-900/95 to-black rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl flex flex-col'
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className='flex items-center justify-between p-6 border-b border-gray-800/50'>
-              <div>
-                <h2 className='text-2xl font-bold text-white'>
+            <div className='flex items-center justify-between p-4 md:p-5 border-b border-gray-800/50 flex-shrink-0'>
+              <div className='min-w-0 flex-1'>
+                <h2 className='text-xl md:text-2xl font-bold text-white truncate'>
                   {selectedTeam.teamName || 'Unnamed Team'}
                 </h2>
-                <p className='text-sm text-white/60 mt-1'>
+                <p className='text-xs md:text-sm text-white/60 mt-1'>
                   Rank #{selectedTeam.rank} • {(selectedTeam.points || 0).toLocaleString()} P
                 </p>
               </div>
               <button
                 onClick={() => setSelectedTeam(null)}
-                className='p-2 hover:bg-gray-800/50 rounded-full transition-colors'
+                className='p-2 hover:bg-gray-800/50 rounded-full transition-colors flex-shrink-0 ml-2'
               >
                 <svg
                   xmlns='http://www.w3.org/2000/svg'
@@ -337,7 +337,7 @@ export default function LeaderboardPage() {
                   viewBox='0 0 24 24'
                   strokeWidth={2}
                   stroke='white'
-                  className='w-6 h-6'
+                  className='w-5 h-5 md:w-6 md:h-6'
                 >
                   <path
                     strokeLinecap='round'
@@ -349,14 +349,14 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Pitch Display */}
-            <div className='flex-1 overflow-y-auto p-6'>
+            <div className='flex-1 overflow-y-auto p-4 md:p-5 min-h-0'>
               {loadingTeam ? (
                 <div className='flex items-center justify-center py-12'>
                   <div className='text-white/70'>Loading team...</div>
                 </div>
               ) : (
-                <div className='relative w-full bg-gradient-to-b from-[#0A3124] to-[#0A3124]/80 rounded-3xl overflow-hidden border border-gray-800/50 shadow-2xl'>
-                  <div className='relative w-full aspect-[3/4] overflow-hidden'>
+                <div className='relative w-full bg-gradient-to-b from-[#0A3124] to-[#0A3124]/80 rounded-2xl overflow-hidden border border-gray-800/50 shadow-2xl'>
+                  <div className='relative w-full aspect-[3/4] max-h-[60vh] overflow-hidden'>
                     <Image
                       src={pitchImage}
                       alt='Football Pitch'
@@ -366,11 +366,11 @@ export default function LeaderboardPage() {
                     />
 
                     {/* Players Formation */}
-                    <div className='absolute inset-0 flex flex-col justify-between p-6'>
+                    <div className='absolute inset-0 flex flex-col justify-between p-3 md:p-4'>
                       {/* Attackers Row (Top) */}
-                      <div className='flex justify-center gap-12'>
-                        <div className='flex flex-col items-center gap-2'>
-                          <div className='relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
+                      <div className='flex justify-center gap-6 md:gap-8'>
+                        <div className='flex flex-col items-center gap-1.5'>
+                          <div className='relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
                             {getPlayerImage(teamPlayers.ATT1) ? (
                               <img
                                 src={getPlayerImage(teamPlayers.ATT1) || ''}
@@ -394,12 +394,12 @@ export default function LeaderboardPage() {
                               </svg>
                             )}
                           </div>
-                          <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
+                          <p className='text-[9px] md:text-[10px] font-semibold text-white text-center max-w-[80px] md:max-w-[100px] truncate drop-shadow-lg'>
                             {teamPlayers.ATT1?.name || 'ATT1'}
                           </p>
                         </div>
-                        <div className='flex flex-col items-center gap-2'>
-                          <div className='relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
+                        <div className='flex flex-col items-center gap-1.5'>
+                          <div className='relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
                             {getPlayerImage(teamPlayers.ATT2) ? (
                               <img
                                 src={getPlayerImage(teamPlayers.ATT2) || ''}
@@ -423,16 +423,16 @@ export default function LeaderboardPage() {
                               </svg>
                             )}
                           </div>
-                          <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
+                          <p className='text-[9px] md:text-[10px] font-semibold text-white text-center max-w-[80px] md:max-w-[100px] truncate drop-shadow-lg'>
                             {teamPlayers.ATT2?.name || 'ATT2'}
                           </p>
                         </div>
                       </div>
 
                       {/* Defenders Row (Middle) */}
-                      <div className='flex justify-center gap-12'>
-                        <div className='flex flex-col items-center gap-2'>
-                          <div className='relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
+                      <div className='flex justify-center gap-6 md:gap-8'>
+                        <div className='flex flex-col items-center gap-1.5'>
+                          <div className='relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
                             {getPlayerImage(teamPlayers.DEF1) ? (
                               <img
                                 src={getPlayerImage(teamPlayers.DEF1) || ''}
@@ -456,12 +456,12 @@ export default function LeaderboardPage() {
                               </svg>
                             )}
                           </div>
-                          <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
+                          <p className='text-[9px] md:text-[10px] font-semibold text-white text-center max-w-[80px] md:max-w-[100px] truncate drop-shadow-lg'>
                             {teamPlayers.DEF1?.name || 'DEF1'}
                           </p>
                         </div>
-                        <div className='flex flex-col items-center gap-2'>
-                          <div className='relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
+                        <div className='flex flex-col items-center gap-1.5'>
+                          <div className='relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
                             {getPlayerImage(teamPlayers.DEF2) ? (
                               <img
                                 src={getPlayerImage(teamPlayers.DEF2) || ''}
@@ -485,7 +485,7 @@ export default function LeaderboardPage() {
                               </svg>
                             )}
                           </div>
-                          <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
+                          <p className='text-[9px] md:text-[10px] font-semibold text-white text-center max-w-[80px] md:max-w-[100px] truncate drop-shadow-lg'>
                             {teamPlayers.DEF2?.name || 'DEF2'}
                           </p>
                         </div>
@@ -493,8 +493,8 @@ export default function LeaderboardPage() {
 
                       {/* Goalkeeper (Bottom) */}
                       <div className='flex justify-center'>
-                        <div className='flex flex-col items-center gap-2'>
-                          <div className='relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
+                        <div className='flex flex-col items-center gap-1.5'>
+                          <div className='relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center'>
                             {getPlayerImage(teamPlayers.GK) ? (
                               <img
                                 src={getPlayerImage(teamPlayers.GK) || ''}
@@ -518,7 +518,7 @@ export default function LeaderboardPage() {
                               </svg>
                             )}
                           </div>
-                          <p className='text-[10px] font-semibold text-white text-center max-w-[100px] truncate drop-shadow-lg'>
+                          <p className='text-[9px] md:text-[10px] font-semibold text-white text-center max-w-[80px] md:max-w-[100px] truncate drop-shadow-lg'>
                             {teamPlayers.GK?.name || 'GK'}
                           </p>
                         </div>
