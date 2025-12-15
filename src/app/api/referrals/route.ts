@@ -115,9 +115,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Generate referral link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                    (request.headers.get('origin') || 'http://localhost:3000');
+    // Generate referral link - use request origin or environment variable
+    const getBaseUrl = () => {
+      // First check environment variable
+      if (process.env.NEXT_PUBLIC_APP_URL) {
+        return process.env.NEXT_PUBLIC_APP_URL;
+      }
+      
+      // Try to get origin from request headers
+      const origin = request.headers.get('origin');
+      if (origin) {
+        return origin;
+      }
+      
+      // Fallback: construct from request URL
+      const url = new URL(request.url);
+      return `${url.protocol}//${url.host}`;
+    };
+    
+    const baseUrl = getBaseUrl();
     const referralLink = referralCode 
       ? `${baseUrl}/app?ref=${referralCode}`
       : null;
