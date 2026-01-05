@@ -80,6 +80,7 @@ export async function getDynamicCosts() {
     createTeamName: await usdToEgld(1, egldPrice), // $1 USD
     editTeamName: await usdToEgld(3, egldPrice), // $3 USD
     transferPerPlayer: await usdToEgld(0.5, egldPrice), // $0.5 USD per player
+    season2Pass: await usdToEgld(6, egldPrice), // $6 USD
     egldPrice
   };
 }

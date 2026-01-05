@@ -54,6 +54,8 @@ export default function App() {
   const [referralCount, setReferralCount] = useState<number>(0);
   const [referralCode, setReferralCode] = useState<string>('');
   const [referredBy, setReferredBy] = useState<{ wallet_address: string; team_name: string | null } | null>(null);
+  const [hasSeason2Pass, setHasSeason2Pass] = useState<boolean>(false);
+  const [isLoadingPass, setIsLoadingPass] = useState(true);
   const pendingTransactions = useGetPendingTransactions();
 
   // Fetch dynamic costs on mount
@@ -126,7 +128,7 @@ export default function App() {
       try {
         const response = await fetch(`/api/referrals?wallet_address=${address}`);
         const result = await response.json();
-        
+
         if (result.success && result.data) {
           setReferralLink(result.data.referral_link || '');
           setRefpoints(result.data.refpoints || 0);
@@ -167,7 +169,7 @@ export default function App() {
         // Load team data
         const response = await fetch(`/api/teams?wallet_address=${address}`);
         const result = await response.json();
-        
+
         if (result.success && result.data) {
           if (result.data.team_name) {
             setTeamName(result.data.team_name);
@@ -187,11 +189,38 @@ export default function App() {
     loadTeamData();
   }, [address]);
 
+  // Load pass status
+  useEffect(() => {
+    const loadPassData = async () => {
+      if (!address) {
+        setIsLoadingPass(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/teams?wallet_address=${address}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          if (result.data.has_season_2_pass !== undefined) {
+            setHasSeason2Pass(result.data.has_season_2_pass);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading pass data:', error);
+      } finally {
+        setIsLoadingPass(false);
+      }
+    };
+
+    loadPassData();
+  }, [address]);
+
   // Load NFTs from collection
   useEffect(() => {
     const fetchNFTs = async () => {
       if (!address || !network.apiAddress) return;
-      
+
       setLoadingNfts(true);
       try {
         const response = await fetch(
@@ -218,7 +247,7 @@ export default function App() {
       const isStillPending = pendingTransactions.some(
         (tx) => tx.hash === pendingTxHash
       );
-      
+
       if (!isStillPending) {
         // Transaction is no longer pending - check if it was successful
         // We'll verify by checking the transaction status on the network
@@ -249,10 +278,10 @@ export default function App() {
                     setPendingTxHash('');
                     setIsSubmittingTeam(false);
                     setTeamSubmitError('');
-                    
+
                     const action = isEditingTeamName ? 'updated' : 'created';
                     success(`Team name ${action} successfully!`, 4000);
-                    
+
                     // Refresh team data to get updated ranking and points
                     const refreshResponse = await fetch(`/api/teams?wallet_address=${address}`);
                     const refreshResult = await refreshResponse.json();
@@ -316,13 +345,19 @@ export default function App() {
 
   // Format EGLD amount for display (from wei to readable format, rounded to 2 decimals)
   const formatEgldAmount = (weiAmount: string): string => {
-    const amount = BigInt(weiAmount);
-    const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
-    const wholePart = amount / divisor;
-    const fractionalPart = amount % divisor;
-    const fractionalStr = fractionalPart.toString().padStart(18, '0');
-    const decimalPart = fractionalStr.slice(0, 2);
-    return `${wholePart.toString()}.${decimalPart}`;
+    if (!weiAmount) return '0.00';
+    try {
+      const amount = BigInt(weiAmount);
+      const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
+      const wholePart = amount / divisor;
+      const fractionalPart = amount % divisor;
+      const fractionalStr = fractionalPart.toString().padStart(18, '0');
+      const decimalPart = fractionalStr.slice(0, 2);
+      return `${wholePart.toString()}.${decimalPart}`;
+    } catch (e) {
+      console.error('Error formatting EGLD amount:', e);
+      return '0.00';
+    }
   };
 
   // Calculate required amount based on create/edit mode
@@ -394,7 +429,7 @@ export default function App() {
         const txArray = Array.isArray(sentTransactions)
           ? sentTransactions
           : [sentTransactions];
-        
+
         if (txArray.length > 0) {
           const tx = txArray[0];
           // Get hash from the transaction
@@ -434,9 +469,9 @@ export default function App() {
 
   const explorerLink = address
     ? getExplorerLink({
-        to: `/${ACCOUNTS_ENDPOINT}/${address}`,
-        explorerAddress: network.explorerAddress
-      })
+      to: `/${ACCOUNTS_ENDPOINT}/${address}`,
+      explorerAddress: network.explorerAddress
+    })
     : '';
 
   const { valueDecimal, valueInteger } =
@@ -462,11 +497,38 @@ export default function App() {
           />
           {/* Text Overlay */}
           <div className='absolute left-0 top-0 h-full flex flex-col justify-center pl-6 z-10'>
-            <p className='text-2xl font-bold text-white mb-1'>AFL Season 1</p>
-            <p className='text-sm font-semibold text-[#3EB489]'>29/11 to 4/1 2026</p>
+            <p className='text-2xl font-bold text-white mb-1'>AFL Season 2</p>
+            <p className='text-sm font-semibold text-[#3EB489]'>5/1/26 to 1/3/26</p>
           </div>
         </div>
       </div>
+
+      {/* Season 2 Pass Notice (Redirect to Team Page) */}
+      {!isLoadingPass && !hasSeason2Pass && (
+        <div
+          className='bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] rounded-3xl p-6 mb-4 shadow-2xl border border-white/20 relative overflow-hidden group active:scale-[0.98] transition-all cursor-pointer'
+          onClick={() => window.location.href = '/app/squads'}
+        >
+          <div className='absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity'></div>
+          <div className='relative flex items-center justify-between z-10'>
+            <div className='flex flex-col gap-1'>
+              <span className='text-[10px] font-black text-black/60 uppercase tracking-widest'>Limited Access</span>
+              <p className='text-xl font-black text-black italic tracking-tighter'>SEASON 2 PASS</p>
+              <p className='text-xs font-bold text-black/80'>Build your ultimate squad & win USDC</p>
+            </div>
+            <div className='flex flex-col items-center gap-2'>
+              <div className='w-12 h-12 rounded-full bg-black flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform'>
+                <svg className='w-6 h-6 text-[#3EB489]' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={3} d='M13 7l5 5m0 0l-5 5m5-5H6' />
+                </svg>
+              </div>
+              <span className='text-[10px] font-black text-black uppercase tracking-tighter'>Get Now</span>
+            </div>
+          </div>
+          <div className='absolute -bottom-4 -left-4 w-24 h-24 bg-white/10 rounded-full blur-2xl'></div>
+          <div className='absolute -top-4 -right-4 w-24 h-24 bg-black/5 rounded-full blur-2xl'></div>
+        </div>
+      )}
 
       {/* Wallet Info Cards - Two Smaller Boxes */}
       <div className='grid grid-cols-2 gap-4'>
@@ -597,10 +659,10 @@ export default function App() {
                     disabled={!teamNameInput.trim() || isSubmittingTeam || !hasSufficientBalance()}
                     className={`${isEditingTeamName ? 'flex-1' : 'w-full'} px-5 py-4 text-base font-bold bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white rounded-2xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-98`}
                   >
-                    {isSubmittingTeam 
-                      ? (isEditingTeamName ? 'Updating...' : 'Submitting...') 
-                      : isEditingTeamName 
-                        ? `Update Team (${dynamicCosts ? formatEgldAmount(dynamicCosts.editTeamName) : '~'} EGLD)` 
+                    {isSubmittingTeam
+                      ? (isEditingTeamName ? 'Updating...' : 'Submitting...')
+                      : isEditingTeamName
+                        ? `Update Team (${dynamicCosts ? formatEgldAmount(dynamicCosts.editTeamName) : '~'} EGLD)`
                         : `Create Team (${dynamicCosts ? formatEgldAmount(dynamicCosts.createTeamName) : '~'} EGLD)`}
                   </Button>
                 </div>
@@ -624,7 +686,7 @@ export default function App() {
                   Edit
                 </button>
               </div>
-              
+
               {/* Divider */}
               <div className='border-t border-gray-800/50 pt-4'>
                 <div className='grid grid-cols-2 gap-4'>
@@ -632,12 +694,12 @@ export default function App() {
                   <div className='flex flex-col gap-1'>
                     <p className='text-[10px] font-medium text-gray-400 uppercase tracking-wider'>Ranking</p>
                     <p className='text-lg font-bold text-white'>
-                      {teamRanking !== null 
+                      {teamRanking !== null
                         ? `${teamRanking}${teamRanking === 1 ? 'st' : teamRanking === 2 ? 'nd' : teamRanking === 3 ? 'rd' : 'th'}`
                         : 'N/A'}
                     </p>
                   </div>
-                  
+
                   {/* Total Points */}
                   <div className='flex flex-col gap-1'>
                     <p className='text-[10px] font-medium text-gray-400 uppercase tracking-wider'>Total Points</p>
@@ -782,12 +844,12 @@ export default function App() {
       <div className='bg-gradient-to-br from-gray-900/95 to-black rounded-3xl p-6 shadow-2xl border border-gray-800/50'>
         <div className='flex items-center justify-between mb-5'>
           <p className='text-xs font-medium text-gray-400 uppercase tracking-wider'>My Squad</p>
-              <a
-                href='/app/shop'
-                className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white text-xs font-semibold rounded-xl shadow-lg transition-all active:scale-95'
-              >
-                Buy More
-              </a>
+          <a
+            href='/app/shop'
+            className='px-4 py-2 bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white text-xs font-semibold rounded-xl shadow-lg transition-all active:scale-95'
+          >
+            Buy More
+          </a>
         </div>
         {loadingNfts ? (
           <div className='text-center py-12 text-gray-400'>

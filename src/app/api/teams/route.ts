@@ -106,8 +106,8 @@ export async function GET(request: NextRequest) {
       rank = (count || 0) + 1;
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: {
         ...userData,
         rank

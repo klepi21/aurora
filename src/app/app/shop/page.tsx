@@ -48,7 +48,18 @@ const OFFER_METADATA: Record<string, { name: string; image: string; position: Pl
   '13': { name: 'Rigo Dubaliez [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-331a9c35', position: 'DEF' },
   '14': { name: 'Vidak Honcar [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-cb03cfa9', position: 'DEF' },
   '15': { name: 'Jano Blak [GK]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-7c7df17d', position: 'GK' },
-  '16': { name: 'Julen Alviroz [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-bcac6afa', position: 'ATT' }
+  '16': { name: 'Julen Alviroz [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-bcac6afa', position: 'ATT' },
+  '17': { name: 'Waliam Salibi [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-75c85606', position: 'DEF' },
+  '18': { name: 'Benard Sui [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-46c2914c', position: 'DEF' },
+  '19': { name: 'Imrah Bokanate [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-4c928c4a', position: 'DEF' },
+  '20': { name: 'Tosan Abadiyoro [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-bad517fa', position: 'DEF' },
+  '21': { name: 'Micky Vandeven [DEF]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-e90ca3b8', position: 'DEF' },
+  '22': { name: 'Luigi G. Mandarunno [GK]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-b869cc5b', position: 'GK' },
+  '23': { name: 'Alisson Marq [GK]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-7f6b6950', position: 'GK' },
+  '24': { name: 'Charlin Rosai [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-98deb1d9', position: 'ATT' },
+  '25': { name: 'Viktor Gykros [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-524d8ef6', position: 'ATT' },
+  '26': { name: 'Guto Keehiki [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-0f2fb72a', position: 'ATT' },
+  '27': { name: 'Phil Nofed [ATT]', image: 'https://media.multiversx.com/nfts/thumbnail/AFL-6cefed-26d70140', position: 'ATT' }
 };
 
 export default function ShopPage() {
@@ -100,23 +111,23 @@ export default function ShopPage() {
         });
 
         const parsedOffers: Offer[] = [];
-        
+
         // The result structure: Result has key '0' containing array of tuples: [{field0: Offer, field1: count}, ...]
         console.log('Raw getAllOffers result:', allOffersResult);
-        
+
         if (allOffersResult) {
           let tuplesArray: any[] = [];
-          
+
           // Get the value - it might be an object with numeric keys
           const resultValue = allOffersResult.valueOf ? allOffersResult.valueOf() : allOffersResult;
           console.log('Result value:', resultValue);
-          
+
           if (Array.isArray(resultValue)) {
             tuplesArray = resultValue;
           } else if (typeof resultValue === 'object' && resultValue !== null) {
             // Check if it has numeric keys like '0'
             const keys = Object.keys(resultValue);
-            
+
             // Get the first array value (usually key '0')
             if (keys.length > 0 && Array.isArray((resultValue as any)[keys[0]])) {
               tuplesArray = (resultValue as any)[keys[0]];
@@ -125,10 +136,10 @@ export default function ShopPage() {
               tuplesArray = Object.values(resultValue).flat();
             }
           }
-          
+
           // Flatten the array: [Array(2)] -> [{field0: Offer1, field1: count1}, {field0: Offer2, field1: count2}]
           const flattenedTuples = tuplesArray.flat();
-          
+
           // Process each tuple: {field0: Offer, field1: count}
           for (let i = 0; i < flattenedTuples.length; i++) {
             const tuple = flattenedTuples[i];
@@ -136,24 +147,24 @@ export default function ShopPage() {
               if (!tuple || typeof tuple !== 'object') {
                 continue;
               }
-              
+
               // Access field0 which contains the Offer struct
               const offerStruct = tuple.field0;
-              
+
               if (!offerStruct) {
                 continue;
               }
-              
+
               // Extract Offer fields: id, creator, collection, token, price
               const idValue = offerStruct.id;
               const creatorAddress = offerStruct.creator;
               const collectionValue = offerStruct.collection;
               const tokenValue = offerStruct.token;
               const priceValue = offerStruct.price;
-              
+
               // Convert id (BigNumber)
               const id = idValue?.toString(10) || idValue?.valueOf()?.toString(10) || '';
-              
+
               // Handle Address type for creator - convert to bech32 string
               let creator = '';
               if (creatorAddress) {
@@ -169,19 +180,19 @@ export default function ShopPage() {
                   // Error converting address, skip
                 }
               }
-              
+
               // Convert collection (string)
               const collection = collectionValue?.toString() || collectionValue?.valueOf()?.toString() || '';
-              
+
               // Convert token (string)
               const token = tokenValue?.toString() || tokenValue?.valueOf()?.toString() || 'EGLD';
-              
+
               // Convert price (BigNumber)
               const price = priceValue?.toString(10) || priceValue?.valueOf()?.toString(10) || '0';
-              
+
               // Debug logging
               console.log('Parsed offer:', { id, collection, token, price });
-              
+
               if (id) {
                 parsedOffers.push({
                   id,
@@ -197,7 +208,7 @@ export default function ShopPage() {
             }
           }
         }
-        
+
         // Fetch available NFTs count for each offer
         const offersWithAvailability = await Promise.all(
           parsedOffers.map(async (offer) => {
@@ -207,7 +218,7 @@ export default function ShopPage() {
                 function: 'availableNfts',
                 arguments: [new BigUIntValue(BigInt(offer.id))]
               });
-              
+
               let availableCount = 0;
               if (availableNftsResult) {
                 const nftsValue = availableNftsResult.valueOf ? availableNftsResult.valueOf() : availableNftsResult;
@@ -229,7 +240,7 @@ export default function ShopPage() {
                         }
                       }, []);
                     };
-                    
+
                     const flattened = flattenArray(nftsValue);
                     const validNonces = flattened.filter(v => v !== null && v !== undefined && v !== '');
                     availableCount = validNonces.length;
@@ -251,7 +262,7 @@ export default function ShopPage() {
                       const allValues = Object.values(nftsValue);
                       // Try flattening
                       const flattened = allValues.flat();
-                      
+
                       // Count valid numeric values
                       const validValues = flattened.filter(v => {
                         if (v === null || v === undefined) return false;
@@ -271,9 +282,9 @@ export default function ShopPage() {
                     }
                   }
                 }
-                
+
               }
-              
+
               return {
                 ...offer,
                 availableCount
@@ -287,9 +298,9 @@ export default function ShopPage() {
             }
           })
         );
-        
+
         console.log('Final offers with availability:', offersWithAvailability);
-        
+
         // Show all offers
         setOffers(offersWithAvailability);
       } catch (error) {
@@ -347,7 +358,7 @@ export default function ShopPage() {
 
       const playerName = OFFER_METADATA[offerId]?.name || 'Player';
       success(`Successfully purchased ${playerName}!`, 4000);
-      
+
       // Refresh offers after purchase
       setTimeout(() => {
         window.location.reload();
@@ -361,19 +372,19 @@ export default function ShopPage() {
 
   const formatPrice = (price: string, token: string) => {
     if (!price || price === '0') return 'N/A';
-    
+
     // Convert from wei/denomination to readable format
     const priceNum = BigInt(price);
     const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
     const wholePart = priceNum / divisor;
     const fractionalPart = priceNum % divisor;
-    
+
     if (token === 'EGLD' || !token) {
       const fractionalStr = fractionalPart.toString().padStart(18, '0');
       const decimalPart = fractionalStr.slice(0, 4).replace(/0+$/, '') || '0';
       return `${wholePart.toString()}.${decimalPart}`;
     }
-    
+
     return `${priceNum.toString()} ${token}`;
   };
 
@@ -381,23 +392,23 @@ export default function ShopPage() {
   const getUsdPrice = (egldPriceWei: string): string => {
     try {
       if (!egldPriceWei || egldPrice === 0) return 'N/A';
-      
+
       const priceNum = BigInt(egldPriceWei);
       const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
-      
+
       // Convert wei to EGLD using string manipulation to avoid precision loss
       const wholePart = priceNum / divisor;
       const fractionalPart = priceNum % divisor;
-      
+
       // Convert fractional part to decimal string
       const fractionalStr = fractionalPart.toString().padStart(18, '0');
       // Take first 4 decimal places and remove trailing zeros
       const decimalPart = fractionalStr.slice(0, 4).replace(/0+$/, '') || '0';
-      
+
       // Combine whole and decimal parts
       const egldAmountStr = `${wholePart.toString()}.${decimalPart}`;
       const egldAmount = parseFloat(egldAmountStr);
-      
+
       // Multiply by current EGLD price in USD
       const usdAmount = egldAmount * egldPrice;
       return usdAmount.toFixed(2);
@@ -408,8 +419,8 @@ export default function ShopPage() {
   };
 
   // Filter offers based on selected position (show all offers when ALL is selected)
-  const filteredOffers = selectedFilter === 'ALL' 
-    ? offers 
+  const filteredOffers = selectedFilter === 'ALL'
+    ? offers
     : offers.filter(offer => {
       // If offer has metadata, filter by position
       // If offer doesn't have metadata, show it in ALL filter only
@@ -427,41 +438,37 @@ export default function ShopPage() {
       <div className='flex flex-wrap gap-2'>
         <button
           onClick={() => setSelectedFilter('ALL')}
-          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-            selectedFilter === 'ALL'
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${selectedFilter === 'ALL'
               ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
               : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
-          }`}
+            }`}
         >
           All Players
         </button>
         <button
           onClick={() => setSelectedFilter('ATT')}
-          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-            selectedFilter === 'ATT'
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${selectedFilter === 'ATT'
               ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
               : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
-          }`}
+            }`}
         >
           ⚽ Attackers
         </button>
         <button
           onClick={() => setSelectedFilter('DEF')}
-          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-            selectedFilter === 'DEF'
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${selectedFilter === 'DEF'
               ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
               : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
-          }`}
+            }`}
         >
           🛡️ Defenders
         </button>
         <button
           onClick={() => setSelectedFilter('GK')}
-          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-            selectedFilter === 'GK'
+          className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${selectedFilter === 'GK'
               ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-gray-900 shadow-lg'
               : 'bg-gray-800/50 text-white/70 hover:bg-gray-800 hover:text-white border border-gray-700/50'
-          }`}
+            }`}
         >
           🥅 Goalkeepers
         </button>
@@ -474,8 +481,8 @@ export default function ShopPage() {
       ) : filteredOffers.length === 0 ? (
         <div className='flex flex-col items-center justify-center py-12 gap-4'>
           <p className='text-white/70 text-lg'>
-            {selectedFilter === 'ALL' 
-              ? 'Players will be here' 
+            {selectedFilter === 'ALL'
+              ? 'Players will be here'
               : `No ${selectedFilter === 'ATT' ? 'attackers' : selectedFilter === 'DEF' ? 'defenders' : 'goalkeepers'} available`}
           </p>
           <p className='text-white/50 text-sm'>Check back later for new player listings</p>
@@ -511,7 +518,7 @@ export default function ShopPage() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Name, Price and Availability */}
                 <div className='flex-1 min-w-0 flex flex-col items-start'>
                   <h3 className='text-xs font-bold text-white break-words w-full mb-1'>
@@ -538,7 +545,7 @@ export default function ShopPage() {
                     Available: <span className='font-semibold text-[#3EB489]'>{offer.availableCount}</span>
                   </p>
                 </div>
-                
+
                 {/* Buy Button */}
                 <div className='flex-shrink-0'>
                   <Button
@@ -546,11 +553,11 @@ export default function ShopPage() {
                     disabled={buyingOfferId === offer.id || offer.availableCount === 0}
                     className='px-4 py-1.5 text-sm bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-gray-900 font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap'
                   >
-                    {buyingOfferId === offer.id 
-                      ? 'Processing...' 
-                      : offer.availableCount === 0 
-                      ? 'Sold Out' 
-                      : 'BUY PLAYER'}
+                    {buyingOfferId === offer.id
+                      ? 'Processing...'
+                      : offer.availableCount === 0
+                        ? 'Sold Out'
+                        : 'BUY PLAYER'}
                   </Button>
                 </div>
               </div>

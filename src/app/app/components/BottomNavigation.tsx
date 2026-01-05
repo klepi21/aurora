@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
     path: RouteNamesEnum.app,
     icon: (
       <Image
-        src={homeIcon}
+        src='/assets/img/home.png'
         alt='Home'
         width={32}
         height={32}
@@ -31,11 +31,11 @@ const navItems: NavItem[] = [
     )
   },
   {
-    label: 'team',
+    label: 'Team',
     path: `${RouteNamesEnum.app}/squads`,
     icon: (
       <Image
-        src={myTeamIcon}
+        src='/assets/img/myteam.png'
         alt='My Team'
         width={32}
         height={32}
@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
     path: `${RouteNamesEnum.app}/leaderboard`,
     icon: (
       <Image
-        src={leaderboardIcon}
+        src='/assets/img/leaderboard.png'
         alt='Leaderboard'
         width={32}
         height={32}
@@ -61,7 +61,7 @@ const navItems: NavItem[] = [
     path: `${RouteNamesEnum.app}/shop`,
     icon: (
       <Image
-        src={transferIcon}
+        src='/assets/img/transfer.png'
         alt='Transfers'
         width={32}
         height={32}
@@ -74,7 +74,7 @@ const navItems: NavItem[] = [
     path: `${RouteNamesEnum.app}/bet`,
     icon: (
       <Image
-        src={betIcon}
+        src='/assets/img/btnbet.png'
         alt='Bet'
         width={32}
         height={32}
@@ -123,9 +123,8 @@ export const BottomNavigation = () => {
                 </div>
               </div>
               <span
-                className={`text-xs font-medium ${
-                  isActive ? 'text-white' : 'text-white/70'
-                }`}
+                className={`text-xs font-medium ${isActive ? 'text-white' : 'text-white/70'
+                  }`}
               >
                 {item.label}
               </span>

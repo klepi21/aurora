@@ -10,12 +10,20 @@ import {
 import { signAndSendTransactions } from '@/helpers/signAndSendTransactions';
 import { GAS_PRICE } from '@/localConstants';
 import { useToastContext } from '@/components/Toast';
+import { Button } from '@/components/Button';
 import { getDynamicCosts } from '@/utils/egldPrice';
 import Image from 'next/image';
 import pitchImage from '../../../../public/assets/img/pitch.png';
 
+const TEAM_NAME_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
+
 const NFT_COLLECTION = 'AFL-6cefed';
 const TRANSFER_RECEIVER = 'erd1pfzzs89g0qsx3hlqkzf2p8unh37932g4cv6ftd869ddv8awwng5q09vlpy';
+
+const DISCOUNTED_ADDRESSES = [
+  'erd1t7em6dece3qnv3s6wa3fs07cvxtd2y9afsdyvykh0fju43gdtmzsh0vywf',
+  'erd1ptfup7utmhr38vz0ukhmjllg65nep0l8rlleeg3p4w4tufwr7lgsfwqx3q'
+];
 
 interface NFT {
   identifier: string;
@@ -61,6 +69,32 @@ export default function SquadsPage() {
   const [transferCostPerPlayer, setTransferCostPerPlayer] = useState<string>('200000000000000000'); // Fallback: 0.2 EGLD
   const [countdown, setCountdown] = useState<string>('');
   const [closingCountdown, setClosingCountdown] = useState<string>('');
+  const [hasSeason2Pass, setHasSeason2Pass] = useState<boolean>(false);
+  const [isBuyingPass, setIsBuyingPass] = useState(false);
+  const [buyPassPendingTxHash, setBuyPassPendingTxHash] = useState<string>('');
+  const [passError, setPassError] = useState<string>('');
+  const [isLoadingPass, setIsLoadingPass] = useState(true);
+  const [dynamicCosts, setDynamicCosts] = useState<{
+    createTeamName: string;
+    editTeamName: string;
+    season2Pass: string;
+    egldPrice: number;
+  } | null>(null);
+  const { account } = useGetAccountInfo();
+
+  // Calculate discount
+  const hasDiscount = useMemo(() => {
+    return address && DISCOUNTED_ADDRESSES.includes(address);
+  }, [address]);
+
+  const effectivePassCost = useMemo(() => {
+    if (!dynamicCosts?.season2Pass) return null;
+    const baseCost = BigInt(dynamicCosts.season2Pass);
+    if (hasDiscount) {
+      return (baseCost * BigInt(80)) / BigInt(100);
+    }
+    return baseCost;
+  }, [dynamicCosts, hasDiscount]);
 
   // Calculate countdown to next substitute window
   useEffect(() => {
@@ -111,7 +145,7 @@ export default function SquadsPage() {
 
       // Calculate time difference
       const diff = nextWindow.getTime() - now.getTime();
-      
+
       if (diff <= 0) {
         setCountdown('Substitutes are now open!');
         return;
@@ -150,9 +184,9 @@ export default function SquadsPage() {
         // Window is open - calculate time until 15:00 UTC
         const closingTime = new Date(now);
         closingTime.setUTCHours(15, 0, 0, 0);
-        
+
         const diff = closingTime.getTime() - now.getTime();
-        
+
         if (diff <= 0) {
           setClosingCountdown('Substitutes closing now!');
           return;
@@ -182,18 +216,30 @@ export default function SquadsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch dynamic transfer cost on mount
+  // Fetch dynamic costs on mount
   useEffect(() => {
-    const loadTransferCost = async () => {
+    const loadCosts = async () => {
       try {
         const costs = await getDynamicCosts();
+        setDynamicCosts({
+          createTeamName: costs.createTeamName,
+          editTeamName: costs.editTeamName,
+          season2Pass: costs.season2Pass,
+          egldPrice: costs.egldPrice
+        });
         setTransferCostPerPlayer(costs.transferPerPlayer);
       } catch (error) {
-        console.error('Error loading transfer cost:', error);
-        // Keep fallback value
+        console.error('Error loading dynamic costs:', error);
+        // Set fallback values
+        setDynamicCosts({
+          createTeamName: '100000000000000000', // 0.1 EGLD fallback
+          editTeamName: '1000000000000000000', // 1 EGLD fallback
+          season2Pass: '120000000000000000', // 0.12 EGLD fallback (~$6)
+          egldPrice: 50
+        });
       }
     };
-    loadTransferCost();
+    loadCosts();
   }, []);
 
   // Load team name from database
@@ -204,7 +250,7 @@ export default function SquadsPage() {
       try {
         const teamResponse = await fetch(`/api/teams?wallet_address=${address}`);
         const teamResult = await teamResponse.json();
-        
+
         if (teamResult.success && teamResult.data?.team_name) {
           setTeamName(teamResult.data.team_name);
         }
@@ -216,6 +262,33 @@ export default function SquadsPage() {
     loadTeamName();
   }, [address]);
 
+  // Load team data and pass status
+  useEffect(() => {
+    const loadPassData = async () => {
+      if (!address) {
+        setIsLoadingPass(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/teams?wallet_address=${address}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          if (result.data.has_season_2_pass !== undefined) {
+            setHasSeason2Pass(result.data.has_season_2_pass);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading pass data:', error);
+      } finally {
+        setIsLoadingPass(false);
+      }
+    };
+
+    loadPassData();
+  }, [address]);
+
   // Load existing team players after NFTs are loaded
   useEffect(() => {
     const loadTeamPlayers = async () => {
@@ -224,7 +297,7 @@ export default function SquadsPage() {
       try {
         const teamPlayersResponse = await fetch(`/api/teams/players?wallet_address=${address}`);
         const teamPlayersResult = await teamPlayersResponse.json();
-        
+
         if (teamPlayersResult.success && teamPlayersResult.data && teamPlayersResult.data.length > 0) {
           const players: Record<string, NFT | null> = {
             ATT1: null,
@@ -292,6 +365,64 @@ export default function SquadsPage() {
     fetchNFTs();
   }, [address, network.apiAddress]);
 
+  // Check if pending buy pass transaction was successful
+  useEffect(() => {
+    if (buyPassPendingTxHash && address) {
+      const isStillPending = pendingTransactions.some(
+        (tx) => tx.hash === buyPassPendingTxHash
+      );
+
+      if (!isStillPending) {
+        const checkTransactionStatus = async () => {
+          try {
+            const response = await fetch(
+              `${network.apiAddress}/transactions/${buyPassPendingTxHash}`
+            );
+            if (response.ok) {
+              const txData = await response.json();
+              if (txData.status === 'success' || txData.status === 'executed') {
+                try {
+                  const saveResponse = await fetch('/api/users/pass', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      wallet_address: address,
+                      tx_hash: buyPassPendingTxHash
+                    })
+                  });
+
+                  const saveResult = await saveResponse.json();
+                  if (saveResult.success) {
+                    setHasSeason2Pass(true);
+                    setBuyPassPendingTxHash('');
+                    setIsBuyingPass(false);
+                    success('Season 2 Pass purchased successfully! Welcome to the league! 🏆', 6000);
+                  } else {
+                    throw new Error(saveResult.error || 'Failed to update pass status');
+                  }
+                } catch (dbError: unknown) {
+                  const errorMsg = (dbError as Error)?.message || 'Transaction succeeded but failed to update pass status. Please refresh.';
+                  console.error('Error updating pass status:', dbError);
+                  setPassError(errorMsg);
+                  showError(errorMsg, 4000);
+                  setIsBuyingPass(false);
+                }
+              } else {
+                setPassError('Transaction failed. Please try again.');
+                setIsBuyingPass(false);
+                setBuyPassPendingTxHash('');
+              }
+            }
+          } catch (error) {
+            console.error('Error checking transaction status:', error);
+          }
+        };
+
+        checkTransactionStatus();
+      }
+    }
+  }, [pendingTransactions, buyPassPendingTxHash, address, network.apiAddress, success, showError]);
+
   const handleSelectPlayer = (position: string) => {
     // Only allow selection in transfer mode or when team is not saved
     if (teamSaved && !isTransferMode) return;
@@ -335,16 +466,6 @@ export default function SquadsPage() {
     return count;
   };
 
-  // Format EGLD amount for display (from wei to readable format, rounded to 2 decimals)
-  const formatEgldAmount = (weiAmount: string): string => {
-    const amount = BigInt(weiAmount);
-    const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
-    const wholePart = amount / divisor;
-    const fractionalPart = amount % divisor;
-    const fractionalStr = fractionalPart.toString().padStart(18, '0');
-    const decimalPart = fractionalStr.slice(0, 2);
-    return `${wholePart.toString()}.${decimalPart}`;
-  };
 
   // Calculate transfer cost
   const getTransferCost = () => {
@@ -357,11 +478,11 @@ export default function SquadsPage() {
     const now = new Date();
     const utcDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday
     const utcHour = now.getUTCHours();
-    
+
     // Tuesday = 2, Friday = 5
     const isAllowedDay = utcDay === 2 || utcDay === 5;
     const isAllowedTime = utcHour >= 9 && utcHour < 15;
-    
+
     return isAllowedDay && isAllowedTime;
   };
 
@@ -370,40 +491,112 @@ export default function SquadsPage() {
     const now = new Date();
     const utcDay = now.getUTCDay();
     const utcHour = now.getUTCHours();
-    
+
     // Calculate next Tuesday
     const nextTuesday = new Date(now);
     const daysUntilTuesday = (2 - utcDay + 7) % 7 || 7;
     nextTuesday.setUTCDate(now.getUTCDate() + daysUntilTuesday);
     nextTuesday.setUTCHours(9, 0, 0, 0);
-    
+
     // Calculate next Friday
     const nextFriday = new Date(now);
     const daysUntilFriday = (5 - utcDay + 7) % 7 || 7;
     nextFriday.setUTCDate(now.getUTCDate() + daysUntilFriday);
     nextFriday.setUTCHours(9, 0, 0, 0);
-    
+
     // If it's Tuesday or Friday but outside hours, show today's window
     if ((utcDay === 2 || utcDay === 5) && utcHour < 9) {
       const todayWindow = new Date(now);
       todayWindow.setUTCHours(9, 0, 0, 0);
       return `Substitutes open today at ${todayWindow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
     }
-    
+
     // If it's Tuesday but after hours, show next Friday
     if (utcDay === 2 && utcHour >= 15) {
       return `Substitutes open next Friday at ${nextFriday.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
     }
-    
+
     // If it's Friday but after hours, show next Tuesday
     if (utcDay === 5 && utcHour >= 15) {
       return `Substitutes open next Tuesday at ${nextTuesday.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
     }
-    
+
     // Otherwise, show the next available window (Tuesday or Friday, whichever is sooner)
     const nextWindow = nextTuesday < nextFriday ? nextTuesday : nextFriday;
     const dayName = nextWindow.getUTCDay() === 2 ? 'Tuesday' : 'Friday';
     return `Substitutes open next ${dayName} at ${nextWindow.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC`;
+  };
+
+  // Format EGLD amount for display (from wei to readable format, rounded to 2 decimals)
+  const formatEgldAmount = (weiAmount: string): string => {
+    if (!weiAmount) return '0.00';
+    try {
+      const amount = BigInt(weiAmount);
+      const divisor = BigInt('1000000000000000000'); // 1 EGLD = 10^18
+      const wholePart = amount / divisor;
+      const fractionalPart = amount % divisor;
+      const fractionalStr = fractionalPart.toString().padStart(18, '0');
+      const decimalPart = fractionalStr.slice(0, 2);
+      return `${wholePart.toString()}.${decimalPart}`;
+    } catch (e) {
+      console.error('Error formatting EGLD amount:', e);
+      return '0.00';
+    }
+  };
+
+  const handleBuySeason2Pass = async () => {
+    if (!address || !effectivePassCost || isBuyingPass) return;
+
+    // Check balance
+    const required = effectivePassCost;
+    const balance = BigInt(account?.balance || '0');
+    const gasCost = BigInt(70000) * BigInt(GAS_PRICE);
+
+    if (balance < (required + gasCost)) {
+      setPassError(`Insufficient balance. You need at least ${formatEgldAmount(required.toString())} EGLD to buy the Season 2 Pass.`);
+      return;
+    }
+
+    setIsBuyingPass(true);
+    setPassError('');
+
+    try {
+      const transaction = new Transaction({
+        value: required,
+        receiver: new Address(TEAM_NAME_RECEIVER),
+        gasLimit: BigInt(70000),
+        gasPrice: BigInt(GAS_PRICE),
+        chainID: network.chainId,
+        sender: new Address(address),
+        version: 1
+      });
+
+      const { sentTransactions } = await signAndSendTransactions({
+        transactions: [transaction],
+        transactionsDisplayInfo: {
+          processingMessage: 'Purchasing Season 2 Pass...',
+          errorMessage: 'Failed to purchase Season 2 Pass',
+          successMessage: 'Season 2 Pass purchase transaction sent!'
+        }
+      });
+
+      if (sentTransactions) {
+        const txArray = Array.isArray(sentTransactions) ? sentTransactions : [sentTransactions];
+        if (txArray.length > 0) {
+          const tx = txArray[0];
+          const txHash = typeof tx === 'object' && 'hash' in tx ? (tx as any).hash : null;
+          if (txHash) {
+            setBuyPassPendingTxHash(txHash);
+          } else {
+            throw new Error('Transaction failed to send');
+          }
+        }
+      }
+    } catch (error: unknown) {
+      console.error('Error buying pass:', error);
+      setPassError((error as Error)?.message || 'Failed to buy pass. Please try again.');
+      setIsBuyingPass(false);
+    }
   };
 
 
@@ -460,14 +653,14 @@ export default function SquadsPage() {
         setPendingTransferTxHash('');
         setIsSavingTeam(false);
         setSaveError(''); // Clear any previous errors
-        
+
         const changedCount = getChangedPlayersCount();
         if (changedCount > 0) {
           success(`Substitutes completed! ${changedCount} player${changedCount !== 1 ? 's' : ''} updated.`, 4000);
         } else {
           success('Team saved successfully!', 4000);
         }
-        
+
         // Load updated team points and player points
         const teamResponse = await fetch(`/api/teams?wallet_address=${address}`);
         const teamResult = await teamResponse.json();
@@ -511,7 +704,7 @@ export default function SquadsPage() {
     const isStillPending = pendingTransactions.some(
       (tx) => tx.hash === pendingTransferTxHash
     );
-    
+
     if (!isStillPending) {
       const checkTransactionStatus = async () => {
         try {
@@ -560,7 +753,7 @@ export default function SquadsPage() {
 
   const handleSaveTransfer = async () => {
     if (!address || !isAllPositionsFilled() || isSavingTeam) return;
-    
+
     // Check if substitute window is open
     if (!isSubstituteWindowOpen()) {
       showError('Substitutes are only available on Tuesdays and Fridays from 09:00-15:00 UTC', 5000);
@@ -602,7 +795,7 @@ export default function SquadsPage() {
         const txArray = Array.isArray(sentTransactions)
           ? sentTransactions
           : [sentTransactions];
-        
+
         if (txArray.length > 0) {
           const tx = txArray[0];
           const txHash = typeof tx === 'object' && 'hash' in tx ? tx.hash : null;
@@ -667,9 +860,9 @@ export default function SquadsPage() {
         setSaveError('');
         setTeamSaved(true);
         setShowSuccessNotification(true);
-        
+
         success('Team saved successfully!', 4000);
-        
+
         // Load updated team points and player points
         const teamResponse = await fetch(`/api/teams?wallet_address=${address}`);
         const teamResult = await teamResponse.json();
@@ -707,12 +900,12 @@ export default function SquadsPage() {
 
   const getPlayerImage = (nft: NFT | null) => {
     if (!nft || !nft.identifier) return null;
-    
+
     // Try NFT media URLs first (usually faster), then fallback to MultiversX API
-    return nft.media?.[0]?.url || 
-           nft.media?.[0]?.originalUrl || 
-           nft.url || 
-           `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}`;
+    return nft.media?.[0]?.url ||
+      nft.media?.[0]?.originalUrl ||
+      nft.url ||
+      `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}`;
   };
 
   const PlayerPlaceholder = memo(({
@@ -725,7 +918,7 @@ export default function SquadsPage() {
     const playerPointsValue = player?.identifier ? playerPoints[player.identifier] : undefined;
     const [imageError, setImageError] = useState(false);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
-    
+
     // Get position label based on position key
     const getPositionLabel = (pos: string) => {
       if (pos.startsWith('GK')) return 'Select GK';
@@ -733,7 +926,7 @@ export default function SquadsPage() {
       if (pos.startsWith('ATT')) return 'Select ATT';
       return 'Select Player';
     };
-    
+
     const playerName = player?.name || getPositionLabel(position);
 
     // Get all possible image sources and try them in order with delay
@@ -747,17 +940,17 @@ export default function SquadsPage() {
       }
 
       // Try NFT media URLs first, then fallback to MultiversX API
-      const imageUrl = player.media?.[0]?.url || 
-                       player.media?.[0]?.originalUrl || 
-                       player.url || 
-                       `https://media.multiversx.com/nfts/thumbnail/${playerIdentifier}`;
+      const imageUrl = player.media?.[0]?.url ||
+        player.media?.[0]?.originalUrl ||
+        player.url ||
+        `https://media.multiversx.com/nfts/thumbnail/${playerIdentifier}`;
       setImageSrc(imageUrl);
       setImageError(false);
     }, [playerIdentifier, player]);
 
     const handleImageError = () => {
       if (!player || !player.identifier) return;
-      
+
       // Mark as error and add to error set
       setImageError(true);
       setImageErrors((prev) => new Set(prev).add(player.identifier));
@@ -765,12 +958,11 @@ export default function SquadsPage() {
 
     return (
       <div className='flex flex-col items-center gap-2'>
-      <div
-        onClick={() => handleSelectPlayer(position)}
-        className={`relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center ${
-          (teamSaved && !isTransferMode) ? 'cursor-default' : 'cursor-pointer hover:border-white/60 hover:scale-110 transition-all'
-        }`}
-      >
+        <div
+          onClick={() => handleSelectPlayer(position)}
+          className={`relative w-20 h-20 rounded-full overflow-hidden border-2 border-white/30 shadow-lg bg-gray-800/50 flex items-center justify-center ${(teamSaved && !isTransferMode) ? 'cursor-default' : 'cursor-pointer hover:border-white/60 hover:scale-110 transition-all'
+            }`}
+        >
           {imageSrc && !imageError && !imageErrors.has(player?.identifier || '') ? (
             <img
               key={imageSrc}
@@ -813,6 +1005,114 @@ export default function SquadsPage() {
       </div>
     );
   });
+
+  if (isLoadingPass) {
+    return (
+      <div className='flex items-center justify-center min-h-[400px]'>
+        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3EB489]'></div>
+      </div>
+    );
+  }
+
+  if (!hasSeason2Pass) {
+    return (
+      <div className='flex flex-col items-center justify-center py-10 px-4'>
+        {/* Season 2 Football Card - Premium CSS version */}
+        <div className='relative group perspective-1000'>
+          <div className='relative w-[320px] h-[580px] rounded-[30px] bg-gradient-to-br from-[#0A3124] via-black to-[#0A3124] border-2 border-[#3EB489]/30 shadow-[0_0_50px_rgba(62,180,137,0.2)] overflow-hidden transition-all duration-500 group-hover:shadow-[0_0_80px_rgba(62,180,137,0.4)] group-hover:scale-[1.02] active:scale-[0.98]'>
+
+            {/* Holographic/Glow effects */}
+            <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(62,180,137,0.3),transparent_70%)] opacity-100 animate-pulse'></div>
+            <div className='absolute -top-10 -right-10 w-40 h-40 bg-[#3EB489]/10 rounded-full blur-3xl'></div>
+            <div className='absolute -bottom-10 -left-10 w-40 h-40 bg-[#8ED6C1]/10 rounded-full blur-3xl'></div>
+
+            {/* Grid Pattern Background */}
+            <div
+              className='absolute inset-0 opacity-[0.05]'
+              style={{
+                backgroundImage: `linear-gradient(to right, #3EB489 1px, transparent 1px), linear-gradient(to bottom, #3EB489 1px, transparent 1px)`,
+                backgroundSize: '20px 20px'
+              }}
+            ></div>
+
+            {/* Card Content */}
+            <div className='relative h-full flex flex-col p-8 z-10'>
+              {/* Header */}
+              <div className='flex justify-between items-start mb-6'>
+                <div className='flex flex-col'>
+                  <span className='text-[10px] font-bold text-[#3EB489] tracking-[0.2em] uppercase'>Official Pass</span>
+                  <h2 className='text-3xl font-black text-white italic tracking-tighter'>AFL</h2>
+                </div>
+                <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-[#3EB489] to-[#8ED6C1] p-[1px] shadow-lg'>
+                  <div className='w-full h-full rounded-xl bg-black flex items-center justify-center'>
+                    <svg className='w-6 h-6 text-[#3EB489]' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Visual Area */}
+              <div className='flex-1 flex flex-col items-center justify-center gap-4 py-4'>
+                <div className='relative w-40 h-40'>
+                  <div className='absolute inset-0 bg-[#3EB489]/20 rounded-full blur-2xl animate-pulse'></div>
+                  <div className='relative w-full h-full flex items-center justify-center border-4 border-[#3EB489]/20 rounded-full'>
+                    <span className='text-7xl font-black text-white italic drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]'>S2</span>
+                  </div>
+                </div>
+                <div className='text-center'>
+                  <h3 className='text-2xl font-bold text-white mb-1'>Season 2 Pass</h3>
+                  <p className='text-[#3EB489] text-xs font-semibold tracking-widest uppercase'>Football League</p>
+                </div>
+              </div>
+
+              {/* Footer / CTA Area */}
+              <div className='mt-auto space-y-4'>
+                <div className='p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md'>
+                  <p className='text-center text-xs text-white/60 leading-relaxed'>
+                    Purchase the Season 2 Pass to unlock the fantasy league, build your squad, and compete for USDC prizes.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleBuySeason2Pass}
+                  disabled={isBuyingPass}
+                  className='w-full py-4 rounded-2xl bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] text-black font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_20px_rgba(62,180,137,0.3)] disabled:opacity-50 relative overflow-hidden'
+                >
+                  {hasDiscount && (
+                    <div className='absolute top-0 right-0 bg-black text-white text-[8px] px-2 py-1 rounded-bl-lg font-bold animate-pulse'>
+                      20% OFF
+                    </div>
+                  )}
+                  {isBuyingPass ? 'Processing...' : `Buy for ${effectivePassCost ? formatEgldAmount(effectivePassCost.toString()) : '...'} EGLD`}
+                </button>
+
+                {passError && (
+                  <p className='text-[10px] text-red-400 text-center font-medium px-2'>
+                    {passError}
+                  </p>
+                )}
+
+                <p className='text-[10px] text-white/30 text-center uppercase tracking-tighter'>
+                  Secure payment via MultiversX
+                </p>
+              </div>
+            </div>
+
+            {/* Gloss reflection overlay */}
+            <div className='absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent pointer-events-none'></div>
+          </div>
+        </div>
+
+        <div className='mt-8 text-center max-w-sm'>
+          <h4 className='text-white font-bold mb-2'>Unlock Elite Access</h4>
+          <p className='text-white/50 text-xs italic leading-relaxed'>
+            "The draft is coming. Build your legacy in Season 2 with the official league pass."
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-col w-full gap-5 pb-6'>
@@ -858,12 +1158,12 @@ export default function SquadsPage() {
           </p>
           <p className='text-sm text-gray-400 text-center'>
             Select them or{' '}
-              <a
-                href='/app/shop'
-                className='text-[#3EB489] hover:text-[#8ED6C1] font-semibold underline transition-colors'
-              >
-                purchase some from here
-              </a>
+            <a
+              href='/app/shop'
+              className='text-[#3EB489] hover:text-[#8ED6C1] font-semibold underline transition-colors'
+            >
+              purchase some from here
+            </a>
           </p>
         </div>
       )}
@@ -912,11 +1212,10 @@ export default function SquadsPage() {
           <button
             onClick={handleStartTransfer}
             disabled={!isSubstituteWindowOpen()}
-            className={`flex-1 font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 ${
-              isSubstituteWindowOpen()
-                ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white'
-                : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
-            }`}
+            className={`flex-1 font-bold py-4 px-6 rounded-2xl shadow-lg transition-all active:scale-98 ${isSubstituteWindowOpen()
+              ? 'bg-gradient-to-r from-[#3EB489] to-[#8ED6C1] hover:from-[#3EB489]/90 hover:to-[#8ED6C1]/90 text-white'
+              : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60'
+              }`}
           >
             Make Substitutes
           </button>
@@ -1075,122 +1374,121 @@ export default function SquadsPage() {
                 if (selectedPosition) {
                   if (selectedPosition.startsWith('DEF')) {
                     // Filter for defenders - show only NFTs with [DEF] in name
-                    filteredNfts = nfts.filter((nft) => 
+                    filteredNfts = nfts.filter((nft) =>
                       (nft.name || nft.identifier).toUpperCase().includes('[DEF]')
                     );
                   } else if (selectedPosition.startsWith('ATT')) {
                     // Filter for attackers - show only NFTs with [ATT] in name
-                    filteredNfts = nfts.filter((nft) => 
+                    filteredNfts = nfts.filter((nft) =>
                       (nft.name || nft.identifier).toUpperCase().includes('[ATT]')
                     );
                   } else if (selectedPosition === 'GK') {
                     // Filter for goalkeepers - show only NFTs with [GK] in name
-                    filteredNfts = nfts.filter((nft) => 
+                    filteredNfts = nfts.filter((nft) =>
                       (nft.name || nft.identifier).toUpperCase().includes('[GK]')
                     );
                   }
                 }
-                
+
                 return filteredNfts.length > 0 ? (
                   <div className='grid grid-cols-2 gap-4'>
                     {filteredNfts.map((nft) => {
-                    // Try NFT media URLs first, then fallback to MultiversX API
-                    const imageUrl = nft.media?.[0]?.url || 
-                                    nft.media?.[0]?.originalUrl || 
-                                    nft.url || 
-                                    (nft.identifier ? `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}` : '');
-                    const isSelected =
-                      selectedPlayers[selectedPosition]?.identifier === nft.identifier;
-                    const isAlreadySelected = isNftSelected(nft.identifier) && !isSelected;
+                      // Try NFT media URLs first, then fallback to MultiversX API
+                      const imageUrl = nft.media?.[0]?.url ||
+                        nft.media?.[0]?.originalUrl ||
+                        nft.url ||
+                        (nft.identifier ? `https://media.multiversx.com/nfts/thumbnail/${nft.identifier}` : '');
+                      const isSelected =
+                        selectedPlayers[selectedPosition]?.identifier === nft.identifier;
+                      const isAlreadySelected = isNftSelected(nft.identifier) && !isSelected;
 
-                    return (
-                      <div
-                        key={nft.identifier}
-                        onClick={() => !isAlreadySelected && handleSelectNft(nft)}
-                        className={`relative w-full aspect-[3/4] rounded-xl overflow-hidden transition-all ${
-                          isAlreadySelected
+                      return (
+                        <div
+                          key={nft.identifier}
+                          onClick={() => !isAlreadySelected && handleSelectNft(nft)}
+                          className={`relative w-full aspect-[3/4] rounded-xl overflow-hidden transition-all ${isAlreadySelected
                             ? 'opacity-50 cursor-not-allowed'
                             : isSelected
-                            ? 'ring-4 ring-[#3EB489] ring-offset-2 ring-offset-gray-900 cursor-pointer'
-                            : 'hover:opacity-90 hover:scale-105 cursor-pointer'
-                        }`}
-                      >
-                        {imageUrl && !imageErrors.has(nft.identifier) ? (
-                          <>
-                            <img
-                              src={imageUrl}
-                              alt={nft.name}
-                              className='w-full h-full object-cover'
-                              loading='lazy'
-                              onError={() => {
-                                if (nft.identifier) {
-                                  setImageErrors((prev) => new Set(prev).add(nft.identifier));
-                                }
-                              }}
-                            />
-                            {/* Gradient overlay */}
-                            <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
-                            {/* Name overlay */}
-                            <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
-                              <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
-                                {nft.name || nft.identifier}
-                              </p>
-                            </div>
-                          </>
-                        ) : (
-                          <div className='w-full h-full bg-gray-800/50 flex flex-col items-center justify-center relative'>
-                            <svg
-                              xmlns='http://www.w3.org/2000/svg'
-                              fill='none'
-                              viewBox='0 0 24 24'
-                              strokeWidth={1.5}
-                              stroke='currentColor'
-                              className='w-16 h-16 text-gray-600'
-                            >
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z'
+                              ? 'ring-4 ring-[#3EB489] ring-offset-2 ring-offset-gray-900 cursor-pointer'
+                              : 'hover:opacity-90 hover:scale-105 cursor-pointer'
+                            }`}
+                        >
+                          {imageUrl && !imageErrors.has(nft.identifier) ? (
+                            <>
+                              <img
+                                src={imageUrl}
+                                alt={nft.name}
+                                className='w-full h-full object-cover'
+                                loading='lazy'
+                                onError={() => {
+                                  if (nft.identifier) {
+                                    setImageErrors((prev) => new Set(prev).add(nft.identifier));
+                                  }
+                                }}
                               />
-                            </svg>
-                            {/* Gradient overlay */}
-                            <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
-                            {/* Name overlay */}
-                            <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
-                              <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
-                                {nft.name || nft.identifier}
-                              </p>
+                              {/* Gradient overlay */}
+                              <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
+                              {/* Name overlay */}
+                              <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
+                                <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
+                                  {nft.name || nft.identifier}
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <div className='w-full h-full bg-gray-800/50 flex flex-col items-center justify-center relative'>
+                              <svg
+                                xmlns='http://www.w3.org/2000/svg'
+                                fill='none'
+                                viewBox='0 0 24 24'
+                                strokeWidth={1.5}
+                                stroke='currentColor'
+                                className='w-16 h-16 text-gray-600'
+                              >
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z'
+                                />
+                              </svg>
+                              {/* Gradient overlay */}
+                              <div className='absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/50 to-transparent'></div>
+                              {/* Name overlay */}
+                              <div className='absolute bottom-0 left-0 right-0 px-4 pb-4'>
+                                <p className='text-xs font-semibold text-white text-center drop-shadow-lg'>
+                                  {nft.name || nft.identifier}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {isSelected && (
-                          <div className='absolute top-2 right-2 w-6 h-6 bg-[#3EB489] rounded-full flex items-center justify-center'>
-                            <svg
-                              xmlns='http://www.w3.org/2000/svg'
-                              fill='none'
-                              viewBox='0 0 24 24'
-                              strokeWidth={3}
-                              stroke='white'
-                              className='w-4 h-4'
-                            >
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                d='M4.5 12.75l6 6 9-13.5'
-                              />
-                            </svg>
-                          </div>
-                        )}
-                        {isAlreadySelected && (
-                          <div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
-                            <div className='bg-gray-800/90 px-3 py-1 rounded-lg'>
-                              <p className='text-xs font-semibold text-white'>Already Selected</p>
+                          )}
+                          {isSelected && (
+                            <div className='absolute top-2 right-2 w-6 h-6 bg-[#3EB489] rounded-full flex items-center justify-center'>
+                              <svg
+                                xmlns='http://www.w3.org/2000/svg'
+                                fill='none'
+                                viewBox='0 0 24 24'
+                                strokeWidth={3}
+                                stroke='white'
+                                className='w-4 h-4'
+                              >
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  d='M4.5 12.75l6 6 9-13.5'
+                                />
+                              </svg>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          )}
+                          {isAlreadySelected && (
+                            <div className='absolute inset-0 bg-black/40 flex items-center justify-center'>
+                              <div className='bg-gray-800/90 px-3 py-1 rounded-lg'>
+                                <p className='text-xs font-semibold text-white'>Already Selected</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className='text-center py-12 text-gray-400'>
